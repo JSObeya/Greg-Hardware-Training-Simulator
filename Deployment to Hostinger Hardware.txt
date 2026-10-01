@@ -1,0 +1,34 @@
+Deploy Greg Hardware Training Simulator to Hostinger (hardware.gregicthub.com)
+
+1. SSH into Hostinger:
+ssh -p 65002 u842010817@46.202.172.40
+
+2. Navigate to your domain directory:
+cd domains/gregicthub.com/public_html
+
+# If setting up the subdomain for the first time:
+git clone https://github.com/JSObeya/Greg-Hardware-Training-Simulator.git hardware
+cd hardware
+cp .env.example .env
+# Edit .env with your Hostinger production database credentials and app URL:
+# APP_ENV=production
+# APP_DEBUG=false
+# APP_URL=https://hardware.gregicthub.com
+# DB_CONNECTION=mysql
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
+# DB_DATABASE=u842010817_hardware (or your created DB)
+# DB_USERNAME=u842010817_...
+# DB_PASSWORD=...
+
+php artisan key:generate
+php artisan migrate --seed --force
+php artisan storage:link
+
+3. For subsequent updates:
+cd domains/gregicthub.com/public_html/hardware
+git pull origin main
+php artisan migrate --force
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
