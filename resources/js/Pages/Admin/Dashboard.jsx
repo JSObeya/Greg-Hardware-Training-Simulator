@@ -66,7 +66,7 @@ export default function AdminDashboard({ stats = { trainees: 0, instructors: 0, 
                             </div>
                             <div className="mt-2 flex items-baseline justify-between">
                                 <div className="text-3xl font-black text-white">
-                                    {stats.labs}
+                                    {stats.labs ?? stats.total_labs ?? stats.active_labs ?? 0}
                                 </div>
                                 <span className="text-blue-400 font-bold text-xs font-mono">Available</span>
                             </div>

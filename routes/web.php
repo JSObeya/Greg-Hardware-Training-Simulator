@@ -66,12 +66,17 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('instructor')->name
     Route::post('/trainees/bulk', [App\Http\Controllers\Instructor\TraineeController::class, 'bulkStore'])->name('trainees.bulk');
 
     // Courses & Modules
-    Route::resource('courses', App\Http\Controllers\Instructor\CourseController::class);
+    Route::resource('courses', App\Http\Controllers\Instructor\CourseController::class)->except(['show', 'create', 'edit']);
+    Route::get('courses/create', fn() => redirect()->route('instructor.courses.index'))->name('courses.create');
+    Route::get('courses/{id}', fn() => redirect()->route('instructor.courses.index'))->name('courses.show');
+    Route::get('courses/{id}/edit', fn() => redirect()->route('instructor.courses.index'))->name('courses.edit');
     Route::post('modules', [App\Http\Controllers\Instructor\CourseController::class, 'storeModule'])->name('modules.store');
     Route::delete('modules/{module}', [App\Http\Controllers\Instructor\CourseController::class, 'destroyModule'])->name('modules.destroy');
 
     // Labs & Config
-    Route::resource('labs', App\Http\Controllers\Instructor\LabController::class);
+    Route::resource('labs', App\Http\Controllers\Instructor\LabController::class)->except(['show', 'create']);
+    Route::get('labs/create', fn() => redirect()->route('instructor.labs.index'))->name('labs.create');
+    Route::get('labs/{id}', fn($id) => redirect()->route('instructor.labs.edit', $id))->name('labs.show');
     Route::post('labs/{lab}/toggle-status', [App\Http\Controllers\Instructor\LabController::class, 'toggleStatus'])->name('labs.toggle-status');
     Route::post('labs/{lab}/set-expiration', [App\Http\Controllers\Instructor\LabController::class, 'setExpiration'])->name('labs.set-expiration');
     Route::post('labs/{id}/restore', [App\Http\Controllers\Instructor\LabController::class, 'restore'])->name('labs.restore');

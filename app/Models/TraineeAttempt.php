@@ -20,6 +20,11 @@ class TraineeAttempt extends Model
         return $this->belongsTo(LabAssignment::class, 'lab_assignment_id');
     }
 
+    public function labAssignment()
+    {
+        return $this->belongsTo(LabAssignment::class, 'lab_assignment_id');
+    }
+
     public function trainee()
     {
         return $this->belongsTo(User::class, 'trainee_id');

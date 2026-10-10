@@ -18,8 +18,8 @@ cp .env.example .env
 # DB_HOST=127.0.0.1
 # DB_PORT=3306
 # DB_DATABASE=u842010817_hardware (or your created DB)
-# DB_USERNAME=u842010817_...
-# DB_PASSWORD=...
+# DB_USERNAME=u842010817_hardware_user
+# DB_PASSWORD=Greghardware1
 
 php artisan key:generate
 php artisan migrate --seed --force

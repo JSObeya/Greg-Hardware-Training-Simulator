@@ -44,7 +44,7 @@ class User extends Authenticatable
 
     public function attempts()
     {
-        return $this->hasManyThrough(TraineeAttempt::class, LabAssignment::class, 'trainee_id', 'lab_assignment_id');
+        return $this->hasMany(TraineeAttempt::class, 'trainee_id');
     }
 
     public function scopeActive($query)

@@ -39,6 +39,7 @@ class AdminController extends Controller
                 'instructors' => $instructorsCount,
                 'active_labs' => $activeLabsCount,
                 'total_labs' => $totalLabsCount,
+                'labs' => $totalLabsCount,
                 'submissions' => $submissionsCount,
             ],
             'recentLogs' => $recentLogs

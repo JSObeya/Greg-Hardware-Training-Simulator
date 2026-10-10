@@ -431,20 +431,21 @@ export default function LabSandbox({ assignment, lab, activeAttempt, completedAt
 
     const getComponentDetails = (instruction) => {
         const text = instruction.toLowerCase();
-        if (text.includes('motherboard') || text.includes('tray')) {
-            return { zone: 'Motherboard Tray', img: '/images/motherboard_layout.png', title: 'ATX Motherboard' };
-        }
-        if (text.includes('cpu')) {
+        // Check specific components BEFORE motherboard, as CPU & RAM steps mention the motherboard socket/DIMM
+        if (text.includes('cpu') || text.includes('processor')) {
             return { zone: 'CPU Socket', img: '/images/cpu_processor.png', title: 'Intel Core i7 CPU' };
         }
-        if (text.includes('ram') || text.includes('dimm')) {
+        if (text.includes('ram') || text.includes('memory') || text.includes('dimm')) {
             return { zone: 'RAM Slots', img: '/images/ram_module.png', title: '8GB DDR4 RAM Stick' };
         }
-        if (text.includes('psu') || text.includes('power') || text.includes('supply')) {
+        if (text.includes('psu') || text.includes('power supply') || text.includes('supply unit')) {
             return { zone: 'PSU Compartment', img: '/images/power_supply_unit.png', title: '500W Power Supply (PSU)' };
         }
         if (text.includes('hard') || text.includes('drive') || text.includes('storage') || text.includes('sata') || text.includes('hdd') || text.includes('ssd') || text.includes('cage') || text.includes('bay')) {
             return { zone: 'Storage Cage', img: '/images/hard_drive.png', title: '1TB SATA Hard Drive' };
+        }
+        if (text.includes('motherboard') || text.includes('tray') || text.includes('mainboard')) {
+            return { zone: 'Motherboard Tray', img: '/images/motherboard_layout.png', title: 'ATX Motherboard' };
         }
         return { zone: 'Chassis Mount', img: '', title: 'Component Part' };
     };
@@ -1426,24 +1427,46 @@ export default function LabSandbox({ assignment, lab, activeAttempt, completedAt
                                                     </p>
 
                                                     <div className="space-y-3">
-                                                        {[
-                                                            'Disconnected Power Cable',
-                                                            'Faulty Power Supply Unit (PSU)',
-                                                            'Incorrectly Connected Front Panel Power Switch'
-                                                        ].map((opt) => (
-                                                            <button
-                                                                key={opt}
-                                                                type="button"
-                                                                onClick={() => handleSelectConclusion(opt)}
-                                                                className={`w-full p-3 rounded-lg border text-left text-xs font-semibold transition ${
-                                                                    conclusion === opt
-                                                                        ? 'border-blue-500 bg-blue-50/50 text-blue-900 dark:bg-blue-950/30 dark:text-blue-400'
-                                                                        : 'border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900/50'
-                                                                }`}
-                                                            >
-                                                                {opt}
-                                                            </button>
-                                                        ))}
+                                                        {(() => {
+                                                            const sc = troubleshootingScenariosList[0];
+                                                            let options = Array.isArray(sc?.variants) && sc.variants.length > 0 ? [...sc.variants] : [];
+                                                            if (options.length === 0) {
+                                                                const titleLower = (sc?.title || '').toLowerCase();
+                                                                const isThermal = titleLower.includes('thermal') || titleLower.includes('overheat') || (sc?.correct_conclusion || '').toLowerCase().includes('cooler') || (sc?.correct_conclusion || '').toLowerCase().includes('film');
+                                                                if (isThermal) {
+                                                                    options = [
+                                                                        'Unpeeled Plastic Film on CPU Cooler Base',
+                                                                        'Insufficient Thermal Paste Application',
+                                                                        'Defective CPU Fan / Liquid Cooler Pump Failure',
+                                                                        'Improper Cooler Mounting Screw Pressure'
+                                                                    ];
+                                                                } else {
+                                                                    options = [
+                                                                        'Disconnected Power Cable',
+                                                                        'Faulty Power Supply Unit (PSU)',
+                                                                        'Incorrectly Connected Front Panel Power Switch',
+                                                                        'Blown Motherboard VRM Capacitor'
+                                                                    ];
+                                                                }
+                                                            }
+                                                            if (sc?.correct_conclusion && !options.some(o => o.toLowerCase().trim() === sc.correct_conclusion.toLowerCase().trim())) {
+                                                                options.unshift(sc.correct_conclusion);
+                                                            }
+                                                            return options.map((opt) => (
+                                                                <button
+                                                                    key={opt}
+                                                                    type="button"
+                                                                    onClick={() => handleSelectConclusion(opt)}
+                                                                    className={`w-full p-3 rounded-lg border text-left text-xs font-semibold transition ${
+                                                                        conclusion === opt
+                                                                            ? 'border-blue-500 bg-blue-50/50 text-blue-900 dark:bg-blue-950/30 dark:text-blue-400'
+                                                                            : 'border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900/50'
+                                                                    }`}
+                                                                >
+                                                                    {opt}
+                                                                </button>
+                                                            ));
+                                                        })()}
                                                     </div>
                                                 </div>
 

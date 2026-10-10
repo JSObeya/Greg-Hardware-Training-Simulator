@@ -1,0 +1,28 @@
+Future Code Updates Workflow
+Whenever you make updates locally and want them live on Hostinger:
+
+Locally in Laragon:
+
+powershell
+
+npm run build
+git add .
+git commit -m "Your update description"
+git push origin main
+On Hostinger via SSH:
+
+bash
+
+cd ~/domains/gregicthub.com/public_html/hardware
+git pull origin main
+php artisan migrate --force
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+
+Browse to https://hardware.gregicthub.com and log in with:
+
+Admin: admin@gregco.local / Password@123
+Instructor: instructor@gregco.local / Password@123
+Trainee: trainee@gregco.local / Password@123

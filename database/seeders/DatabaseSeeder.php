@@ -425,6 +425,12 @@ class DatabaseSeeder extends Seeder
             'scenario_text' => 'A trainee receives a desktop computer that does not power on when pressing the front button. No LED illuminates and fans remain motionless. Follow standard safety isolation procedures before touching internal circuit components.',
             'symptoms' => ['No power', 'No fan spin', 'No beep sound', 'No motherboard standby LED'],
             'correct_conclusion' => 'Disconnected Power Cable',
+            'variants' => [
+                'Disconnected Power Cable',
+                'Faulty Power Supply Unit (PSU)',
+                'Incorrectly Connected Front Panel Power Switch',
+                'Blown Motherboard VRM Capacitor'
+            ],
             'steps' => [
                 [
                     'name' => 'Check Wall Socket & Surge Protector',
@@ -464,6 +470,12 @@ class DatabaseSeeder extends Seeder
             'scenario_text' => 'A newly built workstation powers up normally but crashes or shuts down within 2-3 minutes of running applications. BIOS hardware monitor reports CPU temperature exceeding 100°C (212°F).',
             'symptoms' => ['System shuts down after 2 minutes', 'CPU temperature 100°C', 'Thermal throttling warning', 'High fan noise'],
             'correct_conclusion' => 'Unpeeled Plastic Film on CPU Cooler Base',
+            'variants' => [
+                'Unpeeled Plastic Film on CPU Cooler Base',
+                'Insufficient Thermal Paste Application',
+                'Defective CPU Fan / Liquid Cooler Pump Failure',
+                'Improper Cooler Mounting Screw Pressure'
+            ],
             'steps' => [
                 [
                     'name' => 'Inspect CPU Fan Header & RPM',

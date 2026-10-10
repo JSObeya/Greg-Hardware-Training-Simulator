@@ -25,7 +25,7 @@ class TraineeController extends Controller
         })->withCount([
             'assignments',
             'attempts' => function ($q) {
-                $q->where('status', 'submitted')->orWhere('status', 'graded');
+                $q->whereIn('trainee_attempts.status', ['submitted', 'graded']);
             }
         ]);
 
