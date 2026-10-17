@@ -256,13 +256,13 @@ class DatabaseSeeder extends Seeder
             'is_safety_critical' => false
         ]);
 
-        // Lab 5: Power Supply & Cable Pinouts Simulator (Module 6)
+        // Lab 5: Modular PSU Cable Routing & Visual Wiring Canvas (Module 6)
         $labPsu = Lab::firstOrCreate([
             'module_id' => $modules[6]->id,
-            'title' => 'Power Supply & Cable Pinouts Simulator',
+            'title' => 'Modular PSU Cable Routing & Visual Wiring Canvas',
         ], [
             'type' => 'cable_pinout',
-            'description' => 'Connect ATX 24-Pin motherboard power, EPS 8-Pin CPU 12V, PCIe 8-Pin GPU power, SATA power, and Front Panel header jumpers (Power SW, Reset SW, HDD LED).'
+            'description' => 'Interactive schematic cabling workbench: Route modular PSU harnesses to ATX 24-Pin, EPS 8-Pin CPU 12V, PCIe 8-Pin GPU, SATA storage, and Front Panel jumpers. Test live voltage rails with digital multimeter and verify POST debug sequence.'
         ]);
         $allLabs[] = $labPsu;
 

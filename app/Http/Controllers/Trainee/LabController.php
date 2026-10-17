@@ -324,39 +324,96 @@ class LabController extends Controller
                 'score_awarded' => $totalEarned,
             ]);
 
-        } elseif ($lab->type === 'cable_pinout') {
-            // answers contains mapped cable headers e.g. { 'atx_24pin': 'atx_24pin_hdr', 'eps_8pin': 'eps_cpu_hdr', ... }
-            $mappings = $answers['mappings'] ?? $answers;
-            $correctPairs = [
-                'atx_24pin' => 'atx_24pin_hdr',
-                'eps_8pin' => 'eps_cpu_hdr',
-                'pcie_8pin' => 'gpu_pcie_hdr',
-                'sata_power' => 'sata_ssd_hdr',
-                'pwr_sw' => 'fp_pwr_sw',
-                'reset_sw' => 'fp_reset_sw',
-                'hdd_led' => 'fp_hdd_led',
-            ];
+        } elseif ($lab->type === 'cable_pinout' || $lab->type === 'visual_wiring') {
+            if ($request->has('edges') || isset($answers['edges'])) {
+                // Visual Wiring Canvas interactive submission
+                $edges = $request->input('edges', $answers['edges'] ?? []);
+                $nodes = $request->input('nodes', $answers['nodes'] ?? []);
+                $checklist = $request->input('checklist', $answers['checklist'] ?? []);
+                $clientScore = $request->input('score', $answers['score'] ?? null);
 
-            $correctCount = 0;
-            $totalExpected = count($correctPairs);
+                // Auto-grade connections based on valid edge pairs
+                $requiredPairs = [
+                    ['psu_out_atx24', 'mb_in_atx24'],
+                    ['psu_out_eps8', 'mb_in_eps8'],
+                    ['psu_out_pcie8', 'gpu_in_pcie8'],
+                    ['psu_out_sata', 'ssd_in_power'],
+                    ['mb_out_sata_data', 'ssd_in_data'],
+                    ['fp_pwr_sw_out', 'mb_fpanel_pwr_sw'],
+                    ['fan_pwm_out', 'mb_cpu_fan_hdr']
+                ];
 
-            foreach ($correctPairs as $cableKey => $expectedHeader) {
-                if (isset($mappings[$cableKey]) && $mappings[$cableKey] === $expectedHeader) {
-                    $correctCount++;
+                $matchedCount = 0;
+                foreach ($requiredPairs as $pair) {
+                    $found = false;
+                    foreach ($edges as $e) {
+                        $s = $e['sourceHandle'] ?? '';
+                        $t = $e['targetHandle'] ?? '';
+                        if (($s === $pair[0] && $t === $pair[1]) || ($s === $pair[1] && $t === $pair[0])) {
+                            $found = true;
+                            break;
+                        }
+                    }
+                    if ($found) {
+                        $matchedCount++;
+                    }
                 }
+
+                $cablingPercent = ($matchedCount / count($requiredPairs)) * 100;
+                $esdPassed = (bool) $request->input('isEsdGroundVerified', true);
+                $safetyScore = $esdPassed ? 100 : 70;
+                $totalEarned = is_numeric($clientScore) ? (double)$clientScore : round(($cablingPercent * 0.8) + ($safetyScore * 0.2), 1);
+                $componentScore = $totalEarned;
+
+                TraineeAnswer::create([
+                    'trainee_attempt_id' => $attempt->id,
+                    'question_type' => 'visual_wiring',
+                    'question_id' => $lab->id,
+                    'answer_data' => [
+                        'edges' => $edges,
+                        'nodes' => $nodes,
+                        'checklist' => $checklist,
+                        'postStatus' => $request->input('postStatus', 'SUCCESS'),
+                        'matchedCount' => $matchedCount,
+                        'totalRequired' => count($requiredPairs)
+                    ],
+                    'is_correct' => ($totalEarned >= $lab->passing_score),
+                    'score_awarded' => $totalEarned,
+                ]);
+            } else {
+                // Legacy table mappings
+                $mappings = $answers['mappings'] ?? $answers;
+                $correctPairs = [
+                    'atx_24pin' => 'atx_24pin_hdr',
+                    'eps_8pin' => 'eps_cpu_hdr',
+                    'pcie_8pin' => 'gpu_pcie_hdr',
+                    'sata_power' => 'sata_ssd_hdr',
+                    'pwr_sw' => 'fp_pwr_sw',
+                    'reset_sw' => 'fp_reset_sw',
+                    'hdd_led' => 'fp_hdd_led',
+                ];
+
+                $correctCount = 0;
+                $totalExpected = count($correctPairs);
+
+                foreach ($correctPairs as $cableKey => $expectedHeader) {
+                    if (isset($mappings[$cableKey]) && $mappings[$cableKey] === $expectedHeader) {
+                        $correctCount++;
+                    }
+                }
+
+                $totalEarned = $totalExpected > 0 ? ($correctCount / $totalExpected) * 100 : 100;
+                $componentScore = $totalEarned;
+
+                TraineeAnswer::create([
+                    'trainee_attempt_id' => $attempt->id,
+                    'question_type' => 'cable_pinout',
+                    'question_id' => $lab->id,
+                    'answer_data' => $mappings,
+                    'is_correct' => ($correctCount === $totalExpected),
+                    'score_awarded' => $totalEarned,
+                ]);
             }
-
-            $totalEarned = $totalExpected > 0 ? ($correctCount / $totalExpected) * 100 : 100;
-            $componentScore = $totalEarned;
-
-            TraineeAnswer::create([
-                'trainee_attempt_id' => $attempt->id,
-                'question_type' => 'cable_pinout',
-                'question_id' => $lab->id,
-                'answer_data' => $mappings,
-                'is_correct' => ($correctCount === $totalExpected),
-                'score_awarded' => $totalEarned,
-            ]);
 
         } elseif ($lab->type === 'beep_code_diagnostic') {
             // answers contains diagnostic conclusions for POST hex/beep questions

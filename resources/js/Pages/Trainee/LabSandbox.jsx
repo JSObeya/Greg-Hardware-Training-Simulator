@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
+import VisualWiringCanvas from '@/Components/VisualWiringCanvas/VisualWiringCanvas';
 
 // Comprehensive technical lesson explainers for each module/lab type
 const LESSON_EXPLAINERS = {
@@ -263,8 +264,26 @@ export default function LabSandbox({ assignment, lab, activeAttempt, completedAt
     });
 
     // Cable & Pinout Simulator State
+    const [cablingViewMode, setCablingViewMode] = useState('canvas'); // 'canvas' | 'table'
     const [cableMappings, setCableMappings] = useState({});
     const [selectedCable, setSelectedCable] = useState(null);
+
+    const handleVisualWiringSubmit = (payload) => {
+        if (!activeAttempt) {
+            alert('Please click "Start Simulator Attempt" first to begin your active session.');
+            return;
+        }
+        router.post(route('trainee.labs.submit', activeAttempt.id), {
+            edges: payload.edges,
+            nodes: payload.nodes,
+            checklist: payload.checklist,
+            score: payload.score,
+            postStatus: payload.postStatus,
+            isEsdGroundVerified: payload.isEsdGroundVerified
+        }, {
+            preserveScroll: true
+        });
+    };
 
     // POST Beep / Hex Diagnostics Simulator State
     const [diagnosticAnswers, setDiagnosticAnswers] = useState({
@@ -284,7 +303,7 @@ export default function LabSandbox({ assignment, lab, activeAttempt, completedAt
         if (type === 'bios_config' || title.includes('bios') || title.includes('uefi')) {
             return LESSON_EXPLAINERS.bios;
         }
-        if (type === 'cable_pinout' || title.includes('power supply') || title.includes('pinout') || title.includes('psu')) {
+        if (type === 'cable_pinout' || type === 'visual_wiring' || title.includes('power supply') || title.includes('pinout') || title.includes('psu') || title.includes('wiring')) {
             return LESSON_EXPLAINERS.cabling;
         }
         if (type === 'beep_code_diagnostic' || title.includes('beep') || title.includes('hex code')) {
@@ -1837,145 +1856,190 @@ export default function LabSandbox({ assignment, lab, activeAttempt, completedAt
                                 </form>
                             )}
 
-                            {/* 6. Power Supply & Cable Pinouts Simulator */}
-                            {lab.type === 'cable_pinout' && (
-                                <form onSubmit={handleSubmitLab} className="space-y-8">
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                        <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 p-6 shadow-sm">
-                                            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
-                                                PSU Modular Cable Harnesses
-                                            </h3>
-                                            <p className="text-xs text-slate-400 mb-4">
-                                                Select a power cable, then click its corresponding destination socket on the motherboard/components panel.
-                                            </p>
-
-                                            <div className="space-y-3">
-                                                {[
-                                                    { key: 'atx_24pin', name: 'ATX 24-Pin Main Cable', desc: 'Supplies +3.3V, +5V, +12V main board rails' },
-                                                    { key: 'eps_8pin', name: 'EPS 8-Pin (4+4) CPU 12V', desc: 'Supplies dedicated 12V current to CPU VRMs' },
-                                                    { key: 'pcie_8pin', name: 'PCIe 8-Pin (6+2) GPU Cable', desc: 'Auxiliary 12V power for dedicated graphics card' },
-                                                    { key: 'sata_power', name: '15-Pin SATA Power Connector', desc: 'Power cable for 2.5" SSD and SATA hard drives' },
-                                                    { key: 'pwr_sw', name: 'Front Panel "POWER SW" Jumper', desc: 'Momentary 2-pin power button switch' },
-                                                    { key: 'reset_sw', name: 'Front Panel "RESET SW" Jumper', desc: 'Momentary 2-pin reset button switch' },
-                                                    { key: 'hdd_led', name: 'Front Panel "HDD LED" Jumper', desc: 'Storage activity diode (+/- polarity)' }
-                                                ].map(cable => {
-                                                    const isConnected = !!cableMappings[cable.key];
-                                                    const isSelected = selectedCable === cable.key;
-                                                    return (
-                                                        <div
-                                                            key={cable.key}
-                                                            onClick={() => setSelectedCable(isSelected ? null : cable.key)}
-                                                            className={`p-3.5 rounded-xl border text-xs cursor-pointer transition flex items-center justify-between ${
-                                                                isSelected
-                                                                    ? 'border-blue-600 bg-blue-50 text-blue-900 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-500'
-                                                                    : isConnected
-                                                                    ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-950/20 text-slate-800 dark:text-slate-200'
-                                                                    : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/50'
-                                                            }`}
-                                                        >
-                                                            <div>
-                                                                <span className="font-bold block">{cable.name}</span>
-                                                                <span className="text-[10px] text-slate-400">{cable.desc}</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-2">
-                                                                {isConnected ? (
-                                                                    <>
-                                                                        <span className="text-emerald-600 font-bold text-[10px]">Connected ✓</span>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleDisconnectCable(cable.key);
-                                                                            }}
-                                                                            className="text-xs text-rose-500 hover:underline p-1"
-                                                                        >
-                                                                            ✕
-                                                                        </button>
-                                                                    </>
-                                                                ) : (
-                                                                    <span className={`text-[10px] font-bold ${isSelected ? 'text-blue-600' : 'text-slate-400'}`}>
-                                                                        {isSelected ? 'Ready to Dock' : 'Click to Pick'}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
+                            {/* 6. Power Supply & Cable Pinouts / Visual Wiring Simulator */}
+                            {(lab.type === 'cable_pinout' || lab.type === 'visual_wiring') && (
+                                <div className="space-y-6">
+                                    {/* View Mode Switcher Header */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/90 dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md">
+                                        <div className="flex items-center space-x-2">
+                                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Workbench View:</span>
+                                            <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-950 p-1 border border-slate-200 dark:border-slate-800">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setCablingViewMode('canvas')}
+                                                    className={`rounded-lg px-3.5 py-1.5 text-xs font-extrabold transition flex items-center space-x-1.5 ${
+                                                        cablingViewMode === 'canvas'
+                                                            ? 'bg-blue-600 text-white shadow-sm'
+                                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                                    }`}
+                                                >
+                                                    <span>⚡ Visual Wiring Canvas</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setCablingViewMode('table')}
+                                                    className={`rounded-lg px-3.5 py-1.5 text-xs font-extrabold transition flex items-center space-x-1.5 ${
+                                                        cablingViewMode === 'table'
+                                                            ? 'bg-blue-600 text-white shadow-sm'
+                                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                                    }`}
+                                                >
+                                                    <span>📋 Traditional Pinout Matrix</span>
+                                                </button>
                                             </div>
                                         </div>
-
-                                        <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 p-6 shadow-sm">
-                                            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
-                                                Hardware Sockets & Headers
-                                            </h3>
-                                            <p className="text-xs text-slate-400 mb-4">
-                                                Click a destination socket below while holding a selected cable to lock the connection.
-                                            </p>
-
-                                            <div className="space-y-3">
-                                                {[
-                                                    { key: 'atx_24pin_hdr', label: 'Motherboard 24-Pin ATX Socket', desc: 'Located on right edge of motherboard PCB' },
-                                                    { key: 'eps_cpu_hdr', label: 'CPU 8-Pin EPS Socket (Top Left)', desc: 'Located near CPU VRM heatsinks' },
-                                                    { key: 'gpu_pcie_hdr', label: 'GPU 8-Pin PCIe Power Header', desc: 'Located on dedicated graphics card top edge' },
-                                                    { key: 'sata_ssd_hdr', label: 'Storage Drive 15-Pin Power Socket', desc: 'Located on 2.5" SSD storage drive rear' },
-                                                    { key: 'fp_pwr_sw', label: 'Front Panel Header: Pins 6 & 8 (PWR_BTN)', desc: 'Motherboard lower-right jumper pin cluster' },
-                                                    { key: 'fp_reset_sw', label: 'Front Panel Header: Pins 5 & 7 (RESET)', desc: 'Motherboard lower-right jumper pin cluster' },
-                                                    { key: 'fp_hdd_led', label: 'Front Panel Header: Pins 1 & 3 (HDD_LED)', desc: 'Motherboard lower-right jumper pin cluster' }
-                                                ].map(hdr => {
-                                                    const pluggedCableKey = Object.keys(cableMappings).find(k => cableMappings[k] === hdr.key);
-                                                    return (
-                                                        <div
-                                                            key={hdr.key}
-                                                            onClick={() => {
-                                                                if (selectedCable) {
-                                                                    handleConnectCable(selectedCable, hdr.key);
-                                                                }
-                                                            }}
-                                                            className={`p-3.5 rounded-xl border text-xs transition flex items-center justify-between ${
-                                                                pluggedCableKey
-                                                                    ? 'border-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300'
-                                                                    : selectedCable
-                                                                    ? 'border-blue-300 dark:border-blue-700 bg-blue-50/30 dark:bg-blue-950/20 cursor-pointer hover:border-blue-500'
-                                                                    : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30'
-                                                            }`}
-                                                        >
-                                                            <div>
-                                                                <span className="font-bold block">{hdr.label}</span>
-                                                                <span className="text-[10px] text-slate-400">{hdr.desc}</span>
-                                                            </div>
-                                                            <div>
-                                                                {pluggedCableKey ? (
-                                                                    <span className="font-bold text-[10px] bg-emerald-200 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 rounded">
-                                                                        Plugged: {pluggedCableKey.toUpperCase()}
-                                                                    </span>
-                                                                ) : selectedCable ? (
-                                                                    <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
-                                                                        Click to Dock
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className="text-[10px] text-slate-400">Empty</span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
+                                        <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                            {cablingViewMode === 'canvas'
+                                                ? 'Interactive schematic: drag cable terminals, measure voltages with DMM, and test system POST.'
+                                                : 'Match modular power supply harnesses to destination sockets on the motherboard.'}
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-between items-center bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
-                                        <div className="text-xs text-slate-400 font-semibold">
-                                            Cable harnesses connected: {Object.keys(cableMappings).length} of 7.
-                                        </div>
-                                        <button
-                                            type="submit"
-                                            disabled={submitForm.processing}
-                                            className="rounded-lg bg-blue-600 hover:bg-blue-700 px-6 py-2.5 text-xs font-bold text-white transition shadow-sm"
-                                        >
-                                            {submitForm.processing ? 'Evaluating pinouts...' : 'Submit Cable Harness Run'}
-                                        </button>
-                                    </div>
-                                </form>
+                                    {cablingViewMode === 'canvas' ? (
+                                        <VisualWiringCanvas
+                                            onSubmit={handleVisualWiringSubmit}
+                                            readOnly={!activeAttempt}
+                                        />
+                                    ) : (
+                                        <form onSubmit={handleSubmitLab} className="space-y-8">
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                                <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 p-6 shadow-sm">
+                                                    <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+                                                        PSU Modular Cable Harnesses
+                                                    </h3>
+                                                    <p className="text-xs text-slate-400 mb-4">
+                                                        Select a power cable, then click its corresponding destination socket on the motherboard/components panel.
+                                                    </p>
+
+                                                    <div className="space-y-3">
+                                                        {[
+                                                            { key: 'atx_24pin', name: 'ATX 24-Pin Main Cable', desc: 'Supplies +3.3V, +5V, +12V main board rails' },
+                                                            { key: 'eps_8pin', name: 'EPS 8-Pin (4+4) CPU 12V', desc: 'Supplies dedicated 12V current to CPU VRMs' },
+                                                            { key: 'pcie_8pin', name: 'PCIe 8-Pin (6+2) GPU Cable', desc: 'Auxiliary 12V power for dedicated graphics card' },
+                                                            { key: 'sata_power', name: '15-Pin SATA Power Connector', desc: 'Power cable for 2.5" SSD and SATA hard drives' },
+                                                            { key: 'pwr_sw', name: 'Front Panel "POWER SW" Jumper', desc: 'Momentary 2-pin power button switch' },
+                                                            { key: 'reset_sw', name: 'Front Panel "RESET SW" Jumper', desc: 'Momentary 2-pin reset button switch' },
+                                                            { key: 'hdd_led', name: 'Front Panel "HDD LED" Jumper', desc: 'Storage activity diode (+/- polarity)' }
+                                                        ].map(cable => {
+                                                            const isConnected = !!cableMappings[cable.key];
+                                                            const isSelected = selectedCable === cable.key;
+                                                            return (
+                                                                <div
+                                                                    key={cable.key}
+                                                                    onClick={() => setSelectedCable(isSelected ? null : cable.key)}
+                                                                    className={`p-3.5 rounded-xl border text-xs cursor-pointer transition flex items-center justify-between ${
+                                                                        isSelected
+                                                                            ? 'border-blue-600 bg-blue-50 text-blue-900 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-500'
+                                                                            : isConnected
+                                                                            ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-950/20 text-slate-800 dark:text-slate-200'
+                                                                            : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/50'
+                                                                    }`}
+                                                                >
+                                                                    <div>
+                                                                        <span className="font-bold block">{cable.name}</span>
+                                                                        <span className="text-[10px] text-slate-400">{cable.desc}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        {isConnected ? (
+                                                                            <>
+                                                                                <span className="text-emerald-600 font-bold text-[10px]">Connected ✓</span>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        handleDisconnectCable(cable.key);
+                                                                                    }}
+                                                                                    className="text-xs text-rose-500 hover:underline p-1"
+                                                                                >
+                                                                                    ✕
+                                                                                </button>
+                                                                            </>
+                                                                        ) : (
+                                                                            <span className={`text-[10px] font-bold ${isSelected ? 'text-blue-600' : 'text-slate-400'}`}>
+                                                                                {isSelected ? 'Ready to Dock' : 'Click to Pick'}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                                <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 p-6 shadow-sm">
+                                                    <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+                                                        Hardware Sockets & Headers
+                                                    </h3>
+                                                    <p className="text-xs text-slate-400 mb-4">
+                                                        Click a destination socket below while holding a selected cable to lock the connection.
+                                                    </p>
+
+                                                    <div className="space-y-3">
+                                                        {[
+                                                            { key: 'atx_24pin_hdr', label: 'Motherboard 24-Pin ATX Socket', desc: 'Located on right edge of motherboard PCB' },
+                                                            { key: 'eps_cpu_hdr', label: 'CPU 8-Pin EPS Socket (Top Left)', desc: 'Located near CPU VRM heatsinks' },
+                                                            { key: 'gpu_pcie_hdr', label: 'GPU 8-Pin PCIe Power Header', desc: 'Located on dedicated graphics card top edge' },
+                                                            { key: 'sata_ssd_hdr', label: 'Storage Drive 15-Pin Power Socket', desc: 'Located on 2.5" SSD storage drive rear' },
+                                                            { key: 'fp_pwr_sw', label: 'Front Panel Header: Pins 6 & 8 (PWR_BTN)', desc: 'Motherboard lower-right jumper pin cluster' },
+                                                            { key: 'fp_reset_sw', label: 'Front Panel Header: Pins 5 & 7 (RESET)', desc: 'Motherboard lower-right jumper pin cluster' },
+                                                            { key: 'fp_hdd_led', label: 'Front Panel Header: Pins 1 & 3 (HDD_LED)', desc: 'Motherboard lower-right jumper pin cluster' }
+                                                        ].map(hdr => {
+                                                            const pluggedCableKey = Object.keys(cableMappings).find(k => cableMappings[k] === hdr.key);
+                                                            return (
+                                                                <div
+                                                                    key={hdr.key}
+                                                                    onClick={() => {
+                                                                        if (selectedCable) {
+                                                                            handleConnectCable(selectedCable, hdr.key);
+                                                                        }
+                                                                    }}
+                                                                    className={`p-3.5 rounded-xl border text-xs transition flex items-center justify-between ${
+                                                                        pluggedCableKey
+                                                                            ? 'border-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300'
+                                                                            : selectedCable
+                                                                            ? 'border-blue-300 dark:border-blue-700 bg-blue-50/30 dark:bg-blue-950/20 cursor-pointer hover:border-blue-500'
+                                                                            : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30'
+                                                                    }`}
+                                                                >
+                                                                    <div>
+                                                                        <span className="font-bold block">{hdr.label}</span>
+                                                                        <span className="text-[10px] text-slate-400">{hdr.desc}</span>
+                                                                    </div>
+                                                                    <div>
+                                                                        {pluggedCableKey ? (
+                                                                            <span className="font-bold text-[10px] bg-emerald-200 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 rounded">
+                                                                                Plugged: {pluggedCableKey.toUpperCase()}
+                                                                            </span>
+                                                                        ) : selectedCable ? (
+                                                                            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
+                                                                                Click to Dock
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span className="text-[10px] text-slate-400">Empty</span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex justify-between items-center bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+                                                <div className="text-xs text-slate-400 font-semibold">
+                                                    Cable harnesses connected: {Object.keys(cableMappings).length} of 7.
+                                                </div>
+                                                <button
+                                                    type="submit"
+                                                    disabled={submitForm.processing}
+                                                    className="rounded-lg bg-blue-600 hover:bg-blue-700 px-6 py-2.5 text-xs font-bold text-white transition shadow-sm"
+                                                >
+                                                    {submitForm.processing ? 'Evaluating pinouts...' : 'Submit Cable Harness Run'}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    )}
+                                </div>
                             )}
 
                             {/* 7. POST Hex Codes & Beep Diagnostics Simulator */}

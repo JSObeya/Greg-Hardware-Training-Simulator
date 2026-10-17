@@ -247,6 +247,7 @@ export default function Labs({ labs = [], modules = [], tab = 'active', search: 
                                             <option value="preventive_maintenance">Maintenance</option>
                                             <option value="repair_report">Repair Report</option>
                                             <option value="bios_config">UEFI BIOS Utility</option>
+                                            <option value="visual_wiring">Interactive Visual Wiring Canvas</option>
                                             <option value="cable_pinout">PSU & Front Cables</option>
                                             <option value="beep_code_diagnostic">POST Diagnostic Beeps</option>
                                         </select>
