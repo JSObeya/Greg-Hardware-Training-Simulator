@@ -111,4 +111,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Hardware Sizing, Power Budget & Bottleneck Calculator
+Route::middleware('auth')->group(function () {
+    Route::get('/sizing', [\App\Http\Controllers\SizingController::class, 'index'])->name('sizing.index');
+});
+
 require __DIR__.'/auth.php';

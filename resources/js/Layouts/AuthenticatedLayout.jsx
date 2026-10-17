@@ -87,6 +87,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                         </NavLink>
                                     </>
                                 )}
+
+                                <NavLink href={route('sizing.index')} active={route().current('sizing.*')}>
+                                    ⚡ PSU Sizing & Bottlenecks
+                                </NavLink>
                             </div>
                         </div>
 
@@ -262,6 +266,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </ResponsiveNavLink>
                             </>
                         )}
+
+                        <ResponsiveNavLink href={route('sizing.index')} active={route().current('sizing.*')}>
+                            ⚡ PSU Sizing & Bottlenecks
+                        </ResponsiveNavLink>
                     </div>
 
                     <div className="border-t border-gray-200 pb-1 pt-4 dark:border-gray-600">
