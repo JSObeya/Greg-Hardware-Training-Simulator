@@ -95,6 +95,10 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('instructor')->name
     Route::get('/submissions/{attempt}', [App\Http\Controllers\Instructor\AssignmentController::class, 'reviewAttempt'])->name('submissions.review');
     Route::post('/submissions/{attempt}/grade', [App\Http\Controllers\Instructor\AssignmentController::class, 'gradeAttempt'])->name('submissions.grade');
     Route::get('/submissions/{attempt}/pdf', [App\Http\Controllers\Instructor\AssignmentController::class, 'exportPdf'])->name('submissions.pdf');
+
+    // Cohorts & Universal Multi-Lab Reports
+    Route::get('/reports', [App\Http\Controllers\Instructor\ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/export-csv', [App\Http\Controllers\Instructor\ReportController::class, 'exportCsv'])->name('reports.export-csv');
 });
 
 // Trainee Routes

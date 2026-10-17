@@ -11,12 +11,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'phone', 'password', 'role_id', 'is_active'])]
+#[Fillable(['name', 'email', 'phone', 'cohort', 'password', 'role_id', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
+
+    public function getCohortAttribute($value)
+    {
+        return $value ?: 'Cohort 2026-A';
+    }
 
     /**
      * Get the attributes that should be cast.

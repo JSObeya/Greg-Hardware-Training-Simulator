@@ -65,6 +65,7 @@ class TraineeController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'nullable|string|max:30',
+            'cohort' => 'nullable|string|max:100',
             'password' => ['required', Rules\Password::defaults()],
             'is_active' => 'boolean',
         ]);
@@ -75,6 +76,7 @@ class TraineeController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
+            'cohort' => $request->input('cohort', 'Cohort 2026-A'),
             'password' => Hash::make($request->password),
             'role_id' => $traineeRole->id,
             'is_active' => $request->input('is_active', true),
@@ -95,7 +97,7 @@ class TraineeController extends Controller
         AuditLog::create([
             'user_id' => auth()->id() ?? 1,
             'action' => 'TRAINEE_CREATE',
-            'details' => "Registered trainee: {$user->name} ({$user->email})",
+            'details' => "Registered trainee: {$user->name} ({$user->email}) [Cohort: {$user->cohort}]",
             'ip_address' => $request->ip(),
         ]);
 
@@ -108,6 +110,7 @@ class TraineeController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $trainee->id,
             'phone' => 'nullable|string|max:30',
+            'cohort' => 'nullable|string|max:100',
             'is_active' => 'boolean',
         ]);
 
@@ -115,6 +118,7 @@ class TraineeController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
+            'cohort' => $request->input('cohort', $trainee->cohort ?? 'Cohort 2026-A'),
             'is_active' => $request->input('is_active', true),
         ]);
 

@@ -54,6 +54,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <NavLink href={route('instructor.submissions.index')} active={route().current('instructor.submissions.*')}>
                                             Gradebook
                                         </NavLink>
+                                        <NavLink href={route('instructor.reports.index')} active={route().current('instructor.reports.*')}>
+                                            📊 Multi-Lab Reports
+                                        </NavLink>
                                         <NavLink href={route('admin.backups.index')} active={route().current('admin.backups.index')}>
                                             💾 Database Backups
                                         </NavLink>
@@ -76,6 +79,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                         </NavLink>
                                         <NavLink href={route('instructor.submissions.index')} active={route().current('instructor.submissions.*')}>
                                             Gradebook
+                                        </NavLink>
+                                        <NavLink href={route('instructor.reports.index')} active={route().current('instructor.reports.*')}>
+                                            📊 Multi-Lab Reports
                                         </NavLink>
                                     </>
                                 )}
@@ -236,6 +242,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <ResponsiveNavLink href={route('instructor.submissions.index')} active={route().current('instructor.submissions.*')}>
                                     Gradebook
                                 </ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('instructor.reports.index')} active={route().current('instructor.reports.*')}>
+                                    📊 Multi-Lab Reports
+                                </ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('admin.backups.index')} active={route().current('admin.backups.index')}>
                                     💾 Database Backups
                                 </ResponsiveNavLink>
@@ -258,6 +267,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('instructor.submissions.index')} active={route().current('instructor.submissions.*')}>
                                     Gradebook
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('instructor.reports.index')} active={route().current('instructor.reports.*')}>
+                                    📊 Multi-Lab Reports
                                 </ResponsiveNavLink>
                             </>
                         )}
