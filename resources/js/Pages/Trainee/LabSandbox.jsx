@@ -601,6 +601,13 @@ export default function LabSandbox({ assignment, lab, activeAttempt, completedAt
                             <span className="inline-flex rounded bg-blue-100 dark:bg-blue-950/60 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">
                                 {lab.type.replace('_', ' ')}
                             </span>
+                            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider border ${
+                                lab.is_practice
+                                    ? 'bg-cyan-950/90 text-cyan-300 border-cyan-700/80'
+                                    : 'bg-indigo-950/90 text-indigo-300 border-indigo-700/80'
+                            }`}>
+                                {lab.is_practice ? '🧪 Practice Mode' : '🏆 Graded Exam'}
+                            </span>
                             <span className="text-xs text-slate-400">
                                 {lab.module?.course?.title} &raquo; {lab.module?.title}
                             </span>
@@ -734,6 +741,48 @@ export default function LabSandbox({ assignment, lab, activeAttempt, completedAt
                     {/* SECTION: Simulator Workstation */}
                     {viewMode === 'simulator' && (
                         <>
+                            {/* Mode Indicator Banner */}
+                            {lab.is_practice ? (
+                                <div className="rounded-2xl border border-cyan-800/80 bg-gradient-to-r from-cyan-950/80 via-slate-900 to-blue-950/80 p-4 shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-2xl p-2.5 rounded-xl bg-cyan-900/60 border border-cyan-700/80 text-cyan-300">🧪</span>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-black uppercase tracking-wider text-cyan-400">Practice Mode (Self-Study)</span>
+                                                <span className="rounded-full bg-cyan-900/80 border border-cyan-700 text-cyan-200 text-[9px] px-2 py-0.5 font-bold uppercase">Ungraded Workshop</span>
+                                            </div>
+                                            <p className="text-xs text-slate-300 mt-0.5">
+                                                Practice mode is active. You have unlimited attempts, interactive wiring validation, multimeter telemetry, and zero penalty on your formal gradebook transcript.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={() => setViewMode('lesson')}
+                                            className="rounded-xl border border-cyan-700/80 bg-cyan-950/80 px-3.5 py-1.5 text-xs font-bold text-cyan-300 hover:bg-cyan-900 transition flex items-center gap-1.5"
+                                        >
+                                            <span>💡 Theory & Hints</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="rounded-2xl border border-indigo-800/80 bg-gradient-to-r from-indigo-950/80 via-slate-900 to-purple-950/80 p-4 shadow-lg flex items-center justify-between gap-3 mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-2xl p-2.5 rounded-xl bg-indigo-900/60 border border-indigo-700/80 text-indigo-300">🏆</span>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-black uppercase tracking-wider text-indigo-400">Formal Graded Examination</span>
+                                                <span className="rounded-full bg-indigo-900/80 border border-indigo-700 text-indigo-200 text-[9px] px-2 py-0.5 font-bold uppercase">Official Monitored Lab</span>
+                                            </div>
+                                            <p className="text-xs text-slate-300 mt-0.5">
+                                                Pass Threshold: {lab.passing_score}%. All circuit wiring and diagnostic results are scored and permanently recorded in your institution gradebook.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {!activeAttempt && (
                                 <div className="max-w-2xl mx-auto space-y-6">
                                     <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 p-8 shadow-md">

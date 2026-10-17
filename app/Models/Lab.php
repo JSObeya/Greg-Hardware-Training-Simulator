@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['module_id', 'title', 'description', 'type', 'passing_score', 'time_limit', 'is_active', 'expires_at', 'activated_at'])]
+#[Fillable(['module_id', 'title', 'description', 'type', 'passing_score', 'time_limit', 'is_active', 'is_practice', 'expires_at', 'activated_at'])]
 class Lab extends Model
 {
     use SoftDeletes;
@@ -15,11 +15,17 @@ class Lab extends Model
     {
         return [
             'is_active' => 'boolean',
+            'is_practice' => 'boolean',
             'expires_at' => 'datetime',
             'activated_at' => 'datetime',
             'passing_score' => 'integer',
             'time_limit' => 'integer',
         ];
+    }
+
+    public function getIsPracticeAttribute($value): bool
+    {
+        return (bool) ($value ?? false);
     }
 
     public function module()

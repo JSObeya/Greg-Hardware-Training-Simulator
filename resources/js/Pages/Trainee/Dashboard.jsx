@@ -157,6 +157,13 @@ export default function TraineeDashboard({ assignments = [] }) {
                                                 </span>
 
                                                 <div className="flex items-center gap-1.5">
+                                                    <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider border ${
+                                                        a.lab.is_practice
+                                                            ? 'bg-cyan-950/80 text-cyan-300 border-cyan-700/80'
+                                                            : 'bg-indigo-950/80 text-indigo-300 border-indigo-700/80'
+                                                    }`}>
+                                                        {a.lab.is_practice ? '🧪 Practice' : '🏆 Graded'}
+                                                    </span>
                                                     {getStatusBadge(a.status)}
                                                 </div>
                                             </div>

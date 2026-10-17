@@ -16,6 +16,7 @@ export default function Labs({ labs = [], modules = [], tab = 'active', search: 
         passing_score: 70,
         time_limit: '',
         is_active: true,
+        is_practice: false,
         expires_at: '',
     });
 
@@ -47,6 +48,12 @@ export default function Labs({ labs = [], modules = [], tab = 'active', search: 
 
     const handleToggleStatus = (lab) => {
         router.post(route('instructor.labs.toggle-status', lab.id), {}, {
+            preserveScroll: true,
+        });
+    };
+
+    const handleToggleMode = (lab) => {
+        router.post(route('instructor.labs.toggle-mode', lab.id), {}, {
             preserveScroll: true,
         });
     };
@@ -278,6 +285,44 @@ export default function Labs({ labs = [], modules = [], tab = 'active', search: 
                                     </div>
                                 </div>
 
+                                <div>
+                                    <label className="block font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                                        Evaluation Mode
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setData('is_practice', false)}
+                                            className={`p-3 rounded-xl border text-xs font-bold text-left transition flex items-center gap-2.5 ${
+                                                !data.is_practice
+                                                    ? 'border-indigo-500 bg-indigo-950/70 text-white shadow-md'
+                                                    : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-white'
+                                            }`}
+                                        >
+                                            <span className="text-xl">🏆</span>
+                                            <div>
+                                                <div className="font-black text-white">Graded Examination</div>
+                                                <div className="text-[10px] text-indigo-300/80 font-normal mt-0.5">Formal grading & passing score enforced</div>
+                                            </div>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setData('is_practice', true)}
+                                            className={`p-3 rounded-xl border text-xs font-bold text-left transition flex items-center gap-2.5 ${
+                                                data.is_practice
+                                                    ? 'border-cyan-500 bg-cyan-950/70 text-white shadow-md'
+                                                    : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-white'
+                                            }`}
+                                        >
+                                            <span className="text-xl">🧪</span>
+                                            <div>
+                                                <div className="font-black text-white">Practice (Self-Study)</div>
+                                                <div className="text-[10px] text-cyan-300/80 font-normal mt-0.5">Wiring hints, retries & zero GPA penalty</div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <button
                                     type="submit"
                                     disabled={processing}
@@ -399,18 +444,34 @@ export default function Labs({ labs = [], modules = [], tab = 'active', search: 
                                                         Trashed
                                                     </span>
                                                 ) : (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleToggleStatus(l)}
-                                                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase transition border ${
-                                                            l.is_active
-                                                                ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700/80 hover:bg-emerald-900'
-                                                                : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
-                                                        }`}
-                                                        title="Click to toggle lab activation"
-                                                    >
-                                                        <span>{l.is_active ? '🟢 ACTIVE' : '⚪ INACTIVE'}</span>
-                                                    </button>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleToggleMode(l)}
+                                                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase transition border shadow-sm ${
+                                                                l.is_practice
+                                                                    ? 'bg-cyan-950/90 text-cyan-300 border-cyan-600/80 hover:bg-cyan-900 hover:scale-105'
+                                                                    : 'bg-indigo-950/90 text-indigo-300 border-indigo-600/80 hover:bg-indigo-900 hover:scale-105'
+                                                            }`}
+                                                            title="1-Click Mode Switcher: Click to switch between Practice Mode and Graded Exam Mode"
+                                                        >
+                                                            <span>{l.is_practice ? '🧪 Practice' : '🏆 Graded'}</span>
+                                                            <span className="text-[9px] opacity-60 font-mono">⇄</span>
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleToggleStatus(l)}
+                                                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase transition border ${
+                                                                l.is_active
+                                                                    ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700/80 hover:bg-emerald-900'
+                                                                    : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
+                                                            }`}
+                                                            title="Click to toggle lab activation"
+                                                        >
+                                                            <span>{l.is_active ? '🟢 ACTIVE' : '⚪ INACTIVE'}</span>
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
 
@@ -508,6 +569,7 @@ export default function Labs({ labs = [], modules = [], tab = 'active', search: 
                                         <tr>
                                             <th className="px-6 py-3.5">Lab Title & Module</th>
                                             <th className="px-6 py-3.5">Type</th>
+                                            <th className="px-6 py-3.5">Mode</th>
                                             <th className="px-6 py-3.5">Lifecycle Status</th>
                                             <th className="px-6 py-3.5">Expiration Window</th>
                                             <th className="px-6 py-3.5 text-right">Actions</th>
@@ -532,6 +594,25 @@ export default function Labs({ labs = [], modules = [], tab = 'active', search: 
                                                             <span>{typeMeta.icon}</span>
                                                             <span>{typeMeta.label}</span>
                                                         </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {tab === 'trash' ? (
+                                                            <span className="text-[11px] text-slate-500">N/A</span>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleToggleMode(l)}
+                                                                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase transition border shadow-sm ${
+                                                                    l.is_practice
+                                                                        ? 'bg-cyan-950/90 text-cyan-300 border-cyan-600/80 hover:bg-cyan-900'
+                                                                        : 'bg-indigo-950/90 text-indigo-300 border-indigo-600/80 hover:bg-indigo-900'
+                                                                }`}
+                                                                title="Click to toggle between Practice Mode and Graded Exam Mode"
+                                                            >
+                                                                <span>{l.is_practice ? '🧪 Practice' : '🏆 Graded'}</span>
+                                                                <span className="text-[9px] opacity-60 font-mono">⇄</span>
+                                                            </button>
+                                                        )}
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         {tab === 'trash' ? (

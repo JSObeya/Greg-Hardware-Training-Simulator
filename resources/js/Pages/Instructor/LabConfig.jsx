@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import { useState, useRef } from 'react';
 
 export default function LabConfig({ lab }) {
@@ -100,17 +100,30 @@ export default function LabConfig({ lab }) {
                             Workstation Type: {lab.type.replace(/_/g, ' ')}
                         </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => router.post(route('instructor.labs.toggle-mode', lab.id), {}, { preserveScroll: true })}
+                            className={`rounded-xl px-3.5 py-2 text-xs font-black transition border shadow-sm flex items-center gap-1.5 ${
+                                lab.is_practice
+                                    ? 'bg-cyan-950/90 text-cyan-300 border-cyan-600/80 hover:bg-cyan-900'
+                                    : 'bg-indigo-950/90 text-indigo-300 border-indigo-600/80 hover:bg-indigo-900'
+                            }`}
+                            title="1-Click Mode Switcher: Click to toggle between Practice Mode and Graded Exam Mode"
+                        >
+                            <span>{lab.is_practice ? '🧪 Practice Mode' : '🏆 Graded Mode'}</span>
+                            <span className="text-[10px] opacity-60 font-mono">⇄</span>
+                        </button>
                         <Link
                             href={route('instructor.labs.index')}
-                            className="rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 px-4 py-2.5 text-xs font-bold text-slate-200 transition"
+                            className="rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3.5 py-2 text-xs font-bold text-slate-200 transition"
                         >
                             &larr; Labs Directory
                         </Link>
                         <button
                             onClick={handleSave}
                             disabled={isSaving}
-                            className="rounded-xl bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 text-xs font-bold text-white shadow-md transition disabled:opacity-50"
+                            className="rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-xs font-bold text-white shadow-md transition disabled:opacity-50"
                         >
                             {isSaving ? 'Saving Configuration...' : 'Save Configuration'}
                         </button>

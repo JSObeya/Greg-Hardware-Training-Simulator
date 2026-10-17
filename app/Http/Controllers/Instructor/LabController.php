@@ -65,6 +65,7 @@ class LabController extends Controller
             'passing_score' => 'integer|min:0|max:100',
             'time_limit' => 'nullable|integer',
             'is_active' => 'boolean',
+            'is_practice' => 'boolean',
             'expires_at' => 'nullable|date',
         ]);
 
@@ -76,6 +77,7 @@ class LabController extends Controller
             'passing_score' => $request->input('passing_score', 70),
             'time_limit' => $request->time_limit,
             'is_active' => $request->input('is_active', true),
+            'is_practice' => $request->boolean('is_practice', false),
             'expires_at' => $request->expires_at,
             'activated_at' => $request->input('is_active', true) ? now() : null,
         ]);
@@ -114,6 +116,7 @@ class LabController extends Controller
             'passing_score' => 'integer|min:0|max:100',
             'time_limit' => 'nullable|integer',
             'is_active' => 'boolean',
+            'is_practice' => 'boolean',
             'expires_at' => 'nullable|date',
         ]);
 
@@ -123,6 +126,7 @@ class LabController extends Controller
             'passing_score' => $request->passing_score,
             'time_limit' => $request->time_limit,
             'is_active' => $request->input('is_active', true),
+            'is_practice' => $request->boolean('is_practice', false),
             'expires_at' => $request->expires_at,
             'activated_at' => $request->input('is_active', true) && !$lab->activated_at ? now() : $lab->activated_at,
         ]);
@@ -155,6 +159,23 @@ class LabController extends Controller
         ]);
 
         return redirect()->back()->with('success', "Lab '{$lab->title}' {$statusText} successfully.");
+    }
+
+    public function toggleMode(Request $request, Lab $lab)
+    {
+        $lab->is_practice = !$lab->is_practice;
+        $lab->save();
+
+        $modeText = $lab->is_practice ? 'Practice Mode (Self-Study & Hints)' : 'Graded Examination Mode';
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'LAB_MODE_TOGGLE',
+            'details' => "Switched simulation lab '{$lab->title}' to {$modeText}",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->back()->with('success', "Lab '{$lab->title}' switched to {$modeText}.");
     }
 
     public function setExpiration(Request $request, Lab $lab)

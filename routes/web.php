@@ -78,6 +78,7 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('instructor')->name
     Route::get('labs/create', fn() => redirect()->route('instructor.labs.index'))->name('labs.create');
     Route::get('labs/{id}', fn($id) => redirect()->route('instructor.labs.edit', $id))->name('labs.show');
     Route::post('labs/{lab}/toggle-status', [App\Http\Controllers\Instructor\LabController::class, 'toggleStatus'])->name('labs.toggle-status');
+    Route::post('labs/{lab}/toggle-mode', [App\Http\Controllers\Instructor\LabController::class, 'toggleMode'])->name('labs.toggle-mode');
     Route::post('labs/{lab}/set-expiration', [App\Http\Controllers\Instructor\LabController::class, 'setExpiration'])->name('labs.set-expiration');
     Route::post('labs/{id}/restore', [App\Http\Controllers\Instructor\LabController::class, 'restore'])->name('labs.restore');
     Route::delete('labs/{id}/force', [App\Http\Controllers\Instructor\LabController::class, 'forceDelete'])->name('labs.force-delete');
