@@ -115,6 +115,7 @@ Route::middleware('auth')->group(function () {
 // Hardware Sizing, Power Budget & Bottleneck Calculator
 Route::middleware('auth')->group(function () {
     Route::get('/sizing', [\App\Http\Controllers\SizingController::class, 'index'])->name('sizing.index');
+    Route::get('/components', [\App\Http\Controllers\ComponentCatalogController::class, 'index'])->name('components.index');
 });
 
 require __DIR__.'/auth.php';

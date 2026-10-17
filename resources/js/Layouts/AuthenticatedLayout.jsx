@@ -91,6 +91,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <NavLink href={route('sizing.index')} active={route().current('sizing.*')}>
                                     ⚡ PSU Sizing & Bottlenecks
                                 </NavLink>
+                                <NavLink href={route('components.index')} active={route().current('components.*')}>
+                                    📦 Hardware Catalog & Specs
+                                </NavLink>
                             </div>
                         </div>
 
@@ -269,6 +272,9 @@ export default function AuthenticatedLayout({ header, children }) {
 
                         <ResponsiveNavLink href={route('sizing.index')} active={route().current('sizing.*')}>
                             ⚡ PSU Sizing & Bottlenecks
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('components.index')} active={route().current('components.*')}>
+                            📦 Hardware Catalog & Specs
                         </ResponsiveNavLink>
                     </div>
 
