@@ -149,6 +149,13 @@ export default function AuthenticatedLayout({ header, children }) {
                                     </Dropdown.Trigger>
 
                                     <Dropdown.Content>
+                                        <a
+                                            href={route('user-guide.download')}
+                                            download
+                                            className="block w-full px-4 py-2 text-start text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition border-b border-slate-200 dark:border-slate-700"
+                                        >
+                                            📘 User Guide (.docx)
+                                        </a>
                                         <Dropdown.Link
                                             href={route('profile.edit')}
                                         >
@@ -320,6 +327,13 @@ export default function AuthenticatedLayout({ header, children }) {
                         </div>
 
                         <div className="mt-3 space-y-1">
+                            <a
+                                href={route('user-guide.download')}
+                                download
+                                className="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-start text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                            >
+                                📘 Download User Guide (.docx)
+                            </a>
                             <ResponsiveNavLink href={route('profile.edit')}>
                                 Profile
                             </ResponsiveNavLink>

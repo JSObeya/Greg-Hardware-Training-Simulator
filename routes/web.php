@@ -120,6 +120,13 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/sizing', [\App\Http\Controllers\SizingController::class, 'index'])->name('sizing.index');
     Route::get('/components', [\App\Http\Controllers\ComponentCatalogController::class, 'index'])->name('components.index');
+    Route::get('/user-guide/download', function () {
+        $filePath = public_path('docs/Greg_Hardware_Training_Simulator_User_Guide.docx');
+        if (!file_exists($filePath)) {
+            abort(404, 'User guide file not found.');
+        }
+        return response()->download($filePath, 'Greg_Hardware_Training_Simulator_User_Guide.docx');
+    })->name('user-guide.download');
 });
 
 require __DIR__.'/auth.php';
