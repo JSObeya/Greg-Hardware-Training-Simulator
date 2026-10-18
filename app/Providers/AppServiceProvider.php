@@ -20,6 +20,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Vite::prefetch(concurrency: 3);
+        // Disabled global asset prefetching to ensure instant login and snappy menu navigation
     }
 }

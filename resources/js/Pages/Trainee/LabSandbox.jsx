@@ -682,7 +682,7 @@ export default function LabSandbox({ assignment, lab, activeAttempt, completedAt
                 </div>
             }
         >
-            <Head title={`Sandbox - ${lab.title}`} />
+            <Head title={`Sandbox - ${lab.display_title || lab.title}`} />
 
             <div className="py-8 bg-slate-50 dark:bg-slate-900 min-h-[calc(100vh-65px)]">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">

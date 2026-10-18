@@ -23,7 +23,7 @@ class CourseController extends Controller
 
         $trainees = User::whereHas('role', function ($q) {
             $q->where('name', 'trainee');
-        })->get();
+        })->latest()->take(10)->get(['id', 'name', 'email', 'created_at']);
 
         return Inertia::render('Instructor/Dashboard', [
             'coursesCount' => $coursesCount,
