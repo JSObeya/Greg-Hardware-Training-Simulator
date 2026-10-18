@@ -99,6 +99,13 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('instructor')->name
     // Cohorts & Universal Multi-Lab Reports
     Route::get('/reports', [App\Http\Controllers\Instructor\ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/export-csv', [App\Http\Controllers\Instructor\ReportController::class, 'exportCsv'])->name('reports.export-csv');
+    Route::match(['get', 'post'], '/reports/export-batch', [App\Http\Controllers\Instructor\ReportController::class, 'batchExport'])->name('reports.export-batch');
+    Route::delete('/reports/{attempt}', [App\Http\Controllers\Instructor\ReportController::class, 'destroy'])->name('reports.destroy');
+    Route::post('/reports/bulk-delete', [App\Http\Controllers\Instructor\ReportController::class, 'bulkDelete'])->name('reports.bulk-delete');
+    Route::post('/reports/{id}/restore', [App\Http\Controllers\Instructor\ReportController::class, 'restore'])->name('reports.restore');
+    Route::post('/reports/bulk-restore', [App\Http\Controllers\Instructor\ReportController::class, 'bulkRestore'])->name('reports.bulk-restore');
+    Route::delete('/reports/{id}/force', [App\Http\Controllers\Instructor\ReportController::class, 'forceDelete'])->name('reports.force-delete');
+    Route::post('/reports/bulk-force-delete', [App\Http\Controllers\Instructor\ReportController::class, 'bulkForceDelete'])->name('reports.bulk-force-delete');
 });
 
 // Trainee Routes
