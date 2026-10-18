@@ -60,7 +60,7 @@ export default function Submissions({ attempts = [] }) {
                                                     <div className="text-[10px] text-slate-400 font-mono">{attempt.trainee?.email}</div>
                                                 </td>
                                                 <td className="py-4 px-6 font-semibold text-white">
-                                                    {attempt.assignment?.lab?.title}
+                                                    {attempt.assignment?.lab?.display_title || attempt.assignment?.lab?.title}
                                                     <div className="text-[10px] text-blue-400 font-normal">
                                                         {attempt.assignment?.lab?.module?.course?.title}
                                                     </div>
@@ -69,7 +69,7 @@ export default function Submissions({ attempts = [] }) {
                                                     {attempt.completed_at ? new Date(attempt.completed_at).toLocaleString() : 'N/A'}
                                                 </td>
                                                 <td className="py-4 px-6 font-black text-sm text-emerald-400">
-                                                    {attempt.score !== null ? `${round(attempt.score, 1)}%` : 'Pending'}
+                                                    {attempt.score !== null ? `${round(Number(attempt.score), 1)}%` : 'Pending'}
                                                 </td>
                                                 <td className="py-4 px-6">
                                                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${

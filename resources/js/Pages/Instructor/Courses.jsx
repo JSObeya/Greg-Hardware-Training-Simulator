@@ -234,7 +234,7 @@ export default function Courses({ courses = [] }) {
                                                                             className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-1 text-[11px] font-semibold text-slate-300 hover:border-blue-500/60 hover:text-blue-300 transition flex items-center gap-1"
                                                                         >
                                                                             <span>🔬</span>
-                                                                            <span>{lab.title}</span>
+                                                                            <span>{lab.display_title || lab.title}</span>
                                                                         </Link>
                                                                     ))}
                                                                 </div>

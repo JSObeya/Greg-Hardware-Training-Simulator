@@ -9,6 +9,7 @@ use App\Models\Course;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Carbon\Carbon;
 use Inertia\Inertia;
 
 class ReportController extends Controller
@@ -29,7 +30,8 @@ class ReportController extends Controller
         $query = TraineeAttempt::with([
             'assignment.lab.module.course',
             'trainee',
-            'score',
+            'scoreRecord',
+            'scores',
             'repairReport'
         ])->whereHas('assignment.lab')->whereHas('trainee');
 
@@ -58,9 +60,7 @@ class ReportController extends Controller
         if ($status !== 'all') {
             if ($status === 'passed') {
                 $query->whereIn('status', ['submitted', 'graded'])
-                      ->whereHas('assignment.lab', function ($q) {
-                          // Score >= passing_score
-                      })->where('score', '>=', 70);
+                      ->where('score', '>=', 70);
             } elseif ($status === 'failed') {
                 $query->whereIn('status', ['submitted', 'graded'])
                       ->where('score', '<', 70);
@@ -92,7 +92,8 @@ class ReportController extends Controller
         $completedAttempts = $allAttempts->whereIn('status', ['submitted', 'graded']);
         $uniqueTrainees = $allAttempts->pluck('trainee_id')->unique()->count();
 
-        $avgScore = $completedAttempts->count() > 0 ? round($completedAttempts->avg('score'), 1) : 0;
+        $scoredAttempts = $completedAttempts->filter(fn($a) => is_numeric($a->score));
+        $avgScore = $scoredAttempts->count() > 0 ? round($scoredAttempts->avg('score'), 1) : 0;
         
         $passedCount = 0;
         $totalDurationMinutes = 0;
@@ -105,23 +106,55 @@ class ReportController extends Controller
         foreach ($allAttempts as $att) {
             $lab = $att->assignment->lab ?? null;
             $passingScore = $lab->passing_score ?? 70;
-            $isPassed = ($att->score !== null && $att->score >= $passingScore);
+            $numericScore = is_numeric($att->score) ? (float) $att->score : null;
+            $isPassed = ($numericScore !== null && $numericScore >= $passingScore);
             if ($isPassed) {
                 $passedCount++;
             }
 
-            // Calculate duration
+            // Calculate duration safely
             $durationMins = null;
-            if ($att->started_at && $att->completed_at) {
-                $durationMins = round($att->started_at->diffInMinutes($att->completed_at));
-                $totalDurationMinutes += $durationMins;
-                $durationCount++;
+            if (!empty($att->started_at) && !empty($att->completed_at)) {
+                try {
+                    $start = $att->started_at instanceof \Carbon\CarbonInterface 
+                        ? $att->started_at 
+                        : Carbon::parse($att->started_at);
+                    $end = $att->completed_at instanceof \Carbon\CarbonInterface 
+                        ? $att->completed_at 
+                        : Carbon::parse($att->completed_at);
+                    $durationMins = max(0, round($start->diffInMinutes($end)));
+                    $totalDurationMinutes += $durationMins;
+                    $durationCount++;
+                } catch (\Throwable $e) {
+                    $durationMins = null;
+                }
             }
 
-            $safetyScore = $att->score_data->safety_score ?? ($att->score ? $att->score->safety_score : 100);
-            if ($safetyScore !== null) {
+            $safetyScore = $att->scoreRecord->safety_score 
+                ?? ($att->scores->first()->safety_score ?? 100);
+            if ($safetyScore !== null && is_numeric($safetyScore)) {
                 $safetySum += $safetyScore;
                 $safetyCount++;
+            }
+
+            $startedFormatted = null;
+            if (!empty($att->started_at)) {
+                try {
+                    $dt = $att->started_at instanceof \Carbon\CarbonInterface ? $att->started_at : Carbon::parse($att->started_at);
+                    $startedFormatted = $dt->format('M d, Y H:i');
+                } catch (\Throwable $e) {
+                    $startedFormatted = (string) $att->started_at;
+                }
+            }
+
+            $completedFormatted = 'Incomplete';
+            if (!empty($att->completed_at)) {
+                try {
+                    $dt = $att->completed_at instanceof \Carbon\CarbonInterface ? $att->completed_at : Carbon::parse($att->completed_at);
+                    $completedFormatted = $dt->format('M d, Y H:i');
+                } catch (\Throwable $e) {
+                    $completedFormatted = (string) $att->completed_at;
+                }
             }
 
             $attemptsFormatted[] = [
@@ -131,27 +164,27 @@ class ReportController extends Controller
                 'cohort' => $att->trainee->cohort ?? 'Cohort 2026-A',
                 'course_title' => $lab->module->course->title ?? 'N/A',
                 'module_title' => $lab->module->title ?? 'N/A',
-                'lab_title' => $lab->title ?? 'N/A',
+                'lab_title' => $lab->display_title ?? ($lab->title ?? 'N/A'),
                 'lab_type' => $lab->type ?? 'hardware_lab',
                 'is_practice' => (bool) ($lab->is_practice ?? false),
-                'score' => $att->score !== null ? round($att->score, 1) : null,
-                'safety_score' => $safetyScore,
+                'score' => $numericScore !== null ? round($numericScore, 1) : null,
+                'safety_score' => is_numeric($safetyScore) ? round($safetyScore, 1) : 100,
                 'passing_score' => $passingScore,
                 'is_passed' => $isPassed,
                 'status' => $att->status,
                 'duration_minutes' => $durationMins,
-                'started_at' => $att->started_at ? $att->started_at->format('M d, Y H:i') : null,
-                'completed_at' => $att->completed_at ? $att->completed_at->format('M d, Y H:i') : 'Incomplete',
+                'started_at' => $startedFormatted,
+                'completed_at' => $completedFormatted,
             ];
         }
 
-        $passRate = $completedAttempts->count() > 0 ? round(($passedCount / $completedAttempts->count()) * 100, 1) : 0;
+        $passRate = $scoredAttempts->count() > 0 ? round(($passedCount / $scoredAttempts->count()) * 100, 1) : 0;
         $avgDuration = $durationCount > 0 ? round($totalDurationMinutes / $durationCount, 1) : 0;
         $avgSafety = $safetyCount > 0 ? round($safetySum / $safetyCount, 1) : 100;
 
         // Query filter options
         $courses = Course::select('id', 'title')->orderBy('title')->get();
-        $labs = Lab::select('id', 'title', 'type', 'is_practice')->orderBy('title')->get();
+        $labs = Lab::select('id', 'title', 'type', 'is_practice')->orderBy('id')->get();
         
         $cohorts = User::whereHas('role', fn($q) => $q->where('name', 'trainee'))
             ->whereNotNull('cohort')
@@ -206,7 +239,8 @@ class ReportController extends Controller
         $query = TraineeAttempt::with([
             'assignment.lab.module.course',
             'trainee',
-            'score'
+            'scoreRecord',
+            'scores'
         ])->whereHas('assignment.lab')->whereHas('trainee');
 
         if ($courseId !== 'all') {
@@ -272,15 +306,42 @@ class ReportController extends Controller
             foreach ($attempts as $att) {
                 $lab = $att->assignment->lab ?? null;
                 $passingScore = $lab->passing_score ?? 70;
-                $isPassed = ($att->score !== null && $att->score >= $passingScore);
+                $numericScore = is_numeric($att->score) ? (float) $att->score : null;
+                $isPassed = ($numericScore !== null && $numericScore >= $passingScore);
                 $mode = ($lab && $lab->is_practice) ? 'Practice (Self-Study)' : 'Graded Exam';
                 
                 $duration = '';
-                if ($att->started_at && $att->completed_at) {
-                    $duration = round($att->started_at->diffInMinutes($att->completed_at));
+                if (!empty($att->started_at) && !empty($att->completed_at)) {
+                    try {
+                        $start = $att->started_at instanceof \Carbon\CarbonInterface ? $att->started_at : Carbon::parse($att->started_at);
+                        $end = $att->completed_at instanceof \Carbon\CarbonInterface ? $att->completed_at : Carbon::parse($att->completed_at);
+                        $duration = max(0, round($start->diffInMinutes($end)));
+                    } catch (\Throwable $e) {
+                        $duration = '';
+                    }
                 }
 
-                $safety = $att->score ? $att->score->safety_score : 100;
+                $safety = $att->scoreRecord->safety_score ?? ($att->scores->first()->safety_score ?? 100);
+
+                $startedStr = '';
+                if (!empty($att->started_at)) {
+                    try {
+                        $dt = $att->started_at instanceof \Carbon\CarbonInterface ? $att->started_at : Carbon::parse($att->started_at);
+                        $startedStr = $dt->format('Y-m-d H:i:s');
+                    } catch (\Throwable $e) {
+                        $startedStr = (string) $att->started_at;
+                    }
+                }
+
+                $completedStr = '';
+                if (!empty($att->completed_at)) {
+                    try {
+                        $dt = $att->completed_at instanceof \Carbon\CarbonInterface ? $att->completed_at : Carbon::parse($att->completed_at);
+                        $completedStr = $dt->format('Y-m-d H:i:s');
+                    } catch (\Throwable $e) {
+                        $completedStr = (string) $att->completed_at;
+                    }
+                }
 
                 fputcsv($handle, [
                     $att->id,
@@ -289,17 +350,17 @@ class ReportController extends Controller
                     $att->trainee->cohort ?? 'Cohort 2026-A',
                     $lab->module->course->title ?? 'N/A',
                     $lab->module->title ?? 'N/A',
-                    $lab->title ?? 'N/A',
+                    $lab->display_title ?? ($lab->title ?? 'N/A'),
                     $lab->type ?? 'N/A',
                     $mode,
-                    $att->score !== null ? round($att->score, 1) : 'N/A',
+                    $numericScore !== null ? round($numericScore, 1) : 'N/A',
                     $passingScore,
-                    $isPassed ? 'PASSED' : ($att->score !== null ? 'FAILED' : 'PENDING'),
-                    $safety,
+                    $isPassed ? 'PASSED' : ($numericScore !== null ? 'FAILED' : 'PENDING'),
+                    is_numeric($safety) ? round($safety, 1) : 100,
                     strtoupper($att->status),
                     $duration,
-                    $att->started_at ? $att->started_at->format('Y-m-d H:i:s') : '',
-                    $att->completed_at ? $att->completed_at->format('Y-m-d H:i:s') : '',
+                    $startedStr,
+                    $completedStr,
                 ]);
             }
 

@@ -11,6 +11,8 @@ class Lab extends Model
 {
     use SoftDeletes;
 
+    protected $appends = ['display_title'];
+
     protected function casts(): array
     {
         return [
@@ -21,6 +23,14 @@ class Lab extends Model
             'passing_score' => 'integer',
             'time_limit' => 'integer',
         ];
+    }
+
+    public function getDisplayTitleAttribute(): string
+    {
+        if (preg_match('/^Lab\s*\d+\s*:/i', (string) $this->title)) {
+            return (string) $this->title;
+        }
+        return "Lab {$this->id}: {$this->title}";
     }
 
     public function getIsPracticeAttribute($value): bool

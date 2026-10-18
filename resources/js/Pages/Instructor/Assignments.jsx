@@ -89,7 +89,7 @@ export default function Assignments({ assignments = [], labs = [], trainees = []
                                         <option value="">-- Select Lab --</option>
                                         {labs.map((l) => (
                                             <option key={l.id} value={l.id}>
-                                                {l.title} ({l.type.replace(/_/g, ' ')})
+                                                {l.display_title || l.title} ({l.type.replace(/_/g, ' ')})
                                             </option>
                                         ))}
                                     </select>
@@ -179,7 +179,7 @@ export default function Assignments({ assignments = [], labs = [], trainees = []
                                                     <div className="text-[10px] text-slate-400 font-mono">{a.trainee?.email}</div>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <div className="font-semibold text-white">{a.lab?.title}</div>
+                                                    <div className="font-semibold text-white">{a.lab?.display_title || a.lab?.title}</div>
                                                     <div className="text-[10px] text-blue-400">{a.lab?.module?.course?.title}</div>
                                                 </td>
                                                 <td className="px-6 py-4">

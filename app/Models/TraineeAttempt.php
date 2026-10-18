@@ -15,6 +15,15 @@ class TraineeAttempt extends Model
         'status'
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'started_at' => 'datetime',
+            'completed_at' => 'datetime',
+            'score' => 'double',
+        ];
+    }
+
     public function assignment()
     {
         return $this->belongsTo(LabAssignment::class, 'lab_assignment_id');
@@ -50,7 +59,7 @@ class TraineeAttempt extends Model
         return $this->hasMany(Score::class);
     }
 
-    public function score()
+    public function scoreRecord()
     {
         return $this->hasOne(Score::class);
     }

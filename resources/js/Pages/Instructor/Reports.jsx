@@ -221,7 +221,7 @@ export default function Reports({ attempts = [], kpis = {}, filters = {}, filter
                                     >
                                         <option value="all">All Labs</option>
                                         {(filterOptions.labs || []).map((lb) => (
-                                            <option key={lb.id} value={lb.id}>{lb.title}</option>
+                                            <option key={lb.id} value={lb.id}>{lb.display_title || lb.title}</option>
                                         ))}
                                     </select>
                                 </div>

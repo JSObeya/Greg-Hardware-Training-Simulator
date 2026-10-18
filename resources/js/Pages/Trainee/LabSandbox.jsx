@@ -579,15 +579,44 @@ export default function LabSandbox({ assignment, lab, activeAttempt, completedAt
     const handleSubmitLab = (e) => {
         e.preventDefault();
         
+        if (!activeAttempt) {
+            alert('Please click "Start Simulator Attempt" first before submitting your work.');
+            return;
+        }
+
         if (lab.type === 'component_id' && Object.keys(compAnswers).length < componentQuestionsList.length) {
             if (!confirm('You have unanswered questions. Are you sure you want to submit?')) {
                 return;
             }
         }
 
-        submitForm.post(route('trainee.labs.submit', activeAttempt.id), {
+        let currentAnswers = submitForm.data.answers;
+        if (lab.type === 'assembly_sequence' || lab.type === 'drag_drop_build' || lab.type === 'preventive_maintenance') {
+            currentAnswers = sortedSteps.map(s => s.id);
+        } else if (lab.type === 'component_id' || lab.type === 'motherboard_hotspot') {
+            currentAnswers = compAnswers;
+        } else if (lab.type === 'bios_config') {
+            currentAnswers = biosSettings;
+        } else if (lab.type === 'beep_code_diagnostic') {
+            currentAnswers = diagnosticAnswers;
+        } else if (lab.type === 'troubleshooting') {
+            currentAnswers = {
+                conclusion: conclusion,
+                checked_steps: checkedSteps
+            };
+        }
+
+        router.post(route('trainee.labs.submit', activeAttempt.id), {
+            answers: currentAnswers,
+            report: submitForm.data.report
+        }, {
+            preserveScroll: true,
             onSuccess: () => {
-                alert('Lab submitted successfully!');
+                alert('Lab completed and submitted successfully!');
+            },
+            onError: (errs) => {
+                console.error('Submission error:', errs);
+                alert('There was an error submitting your lab. Please check your answers and try again.');
             }
         });
     };
@@ -613,7 +642,7 @@ export default function LabSandbox({ assignment, lab, activeAttempt, completedAt
                             </span>
                         </div>
                         <h2 className="text-xl font-bold leading-tight text-slate-800 dark:text-slate-100 mt-1">
-                            {lab.title}
+                            {lab.display_title || lab.title}
                         </h2>
                     </div>
 
@@ -865,11 +894,11 @@ export default function LabSandbox({ assignment, lab, activeAttempt, completedAt
                                                             </div>
                                                         </div>
                                                         <div className="text-right">
-                                                            <span className={`text-sm font-bold ${att.score >= lab.passing_score ? 'text-emerald-600' : 'text-rose-500'}`}>
-                                                                {Math.round(att.score)}% Score
+                                                            <span className={`text-sm font-bold ${(Number(att.score) || 0) >= lab.passing_score ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                                                {Math.round(Number(att.score) || 0)}% Score
                                                             </span>
                                                             <div className="text-[10px] text-slate-400">
-                                                                {att.score >= lab.passing_score ? 'Passed' : 'Failed'}
+                                                                {(Number(att.score) || 0) >= lab.passing_score ? 'Passed' : 'Failed'}
                                                             </div>
                                                         </div>
                                                     </div>

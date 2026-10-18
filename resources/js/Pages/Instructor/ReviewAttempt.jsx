@@ -55,7 +55,7 @@ export default function ReviewAttempt({ attempt }) {
                             <div className="grid grid-cols-2 gap-4 text-xs text-slate-300">
                                 <div>
                                     <span className="font-bold uppercase tracking-wider text-[10px] text-slate-400 block mb-0.5">Lab Title</span>
-                                    <span className="font-bold text-white text-sm">{lab.title}</span>
+                                    <span className="font-bold text-white text-sm">{lab.display_title || lab.title}</span>
                                 </div>
                                 <div>
                                     <span className="font-bold uppercase tracking-wider text-[10px] text-slate-400 block mb-0.5">Lab Type</span>

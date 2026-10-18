@@ -94,7 +94,7 @@ export default function LabConfig({ lab }) {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <h2 className="text-xl font-bold leading-tight text-white">
-                            Configure Simulator: {lab.title}
+                            Configure Simulator: {lab.display_title || lab.title}
                         </h2>
                         <p className="text-xs text-blue-400 mt-1 uppercase font-mono tracking-wider font-bold">
                             Workstation Type: {lab.type.replace(/_/g, ' ')}
@@ -131,7 +131,7 @@ export default function LabConfig({ lab }) {
                 </div>
             }
         >
-            <Head title={`Config - ${lab.title}`} />
+            <Head title={`Config - ${lab.display_title || lab.title}`} />
 
             <div className="py-8 bg-slate-950 text-slate-100 min-h-[calc(100vh-65px)]">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">

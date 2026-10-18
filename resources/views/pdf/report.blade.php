@@ -100,7 +100,7 @@
             <td class="meta-label">Trainee Email:</td>
             <td class="meta-value">{{ $attempt->trainee->email }}</td>
             <td class="meta-label">Assigned Lab:</td>
-            <td class="meta-value">{{ $attempt->assignment->lab->title }}</td>
+            <td class="meta-value">{{ $attempt->assignment->lab->display_title ?? $attempt->assignment->lab->title }}</td>
         </tr>
         <tr>
             <td class="meta-label">Completed Date:</td>

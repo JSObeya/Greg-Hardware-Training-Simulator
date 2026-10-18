@@ -480,7 +480,7 @@ export default function Labs({ labs = [], modules = [], tab = 'active', search: 
                                             </span>
 
                                             <h4 className="text-base font-black text-white leading-snug group-hover:text-blue-400 transition">
-                                                {l.title}
+                                                {l.display_title || l.title}
                                             </h4>
 
                                             <p className="text-xs text-slate-300 mt-2.5 line-clamp-3 leading-relaxed font-normal">
@@ -583,7 +583,7 @@ export default function Labs({ labs = [], modules = [], tab = 'active', search: 
                                                 <tr key={l.id} className="hover:bg-slate-800/50 transition">
                                                     <td className="px-6 py-4">
                                                         <div className="font-bold text-white">
-                                                            {l.title}
+                                                            {l.display_title || l.title}
                                                         </div>
                                                         <div className="text-[10px] text-blue-400 font-medium">
                                                             {l.module?.title} &bull; <span className="text-slate-400">{l.module?.course?.title}</span>
@@ -704,7 +704,7 @@ export default function Labs({ labs = [], modules = [], tab = 'active', search: 
                     <div className="w-full max-w-md rounded-2xl bg-slate-900 p-6 shadow-2xl border border-slate-700 space-y-4">
                         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                             <h3 className="text-base font-bold text-white">
-                                Set Expiration: {expiringLab.title}
+                                Set Expiration: {expiringLab.display_title || expiringLab.title}
                             </h3>
                             <button onClick={() => setExpiringLab(null)} className="text-slate-400 hover:text-white">✕</button>
                         </div>

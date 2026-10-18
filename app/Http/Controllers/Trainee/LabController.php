@@ -24,7 +24,7 @@ class LabController extends Controller
         $traineeId = Auth::id();
 
         $assignments = LabAssignment::where('trainee_id', $traineeId)
-            ->with(['lab.module.course', 'attempts.score'])
+            ->with(['lab.module.course', 'attempts.scoreRecord'])
             ->get();
 
         return Inertia::render('Trainee/Dashboard', [
@@ -59,7 +59,7 @@ class LabController extends Controller
         // Get completed attempts
         $completedAttempts = TraineeAttempt::where('lab_assignment_id', $assignment->id)
             ->whereIn('status', ['submitted', 'graded'])
-            ->with('score')
+            ->with('scoreRecord')
             ->get();
 
         return Inertia::render('Trainee/LabSandbox', [
@@ -207,7 +207,7 @@ class LabController extends Controller
             $steps = AssemblyStep::where('lab_id', $lab->id)->orderBy('step_number')->get();
             
             // answers is expected to be list of step IDs in sorted order e.g. [4, 1, 3, 2]
-            $submittedSequence = $answers; 
+            $submittedSequence = is_array($answers) ? array_values($answers) : []; 
             $correctCount = 0;
             $safetyViolations = 0;
 
@@ -284,6 +284,15 @@ class LabController extends Controller
             
             // Overall score: 60% diagnosis accuracy, 40% safety compliance
             $totalEarned = ($diagnosisScore * 0.6) + ($safetyScore * 0.4);
+
+            TraineeAnswer::create([
+                'trainee_attempt_id' => $attempt->id,
+                'question_type' => 'troubleshooting',
+                'question_id' => $lab->id,
+                'answer_data' => $userTrouble,
+                'is_correct' => $conclusionCorrect,
+                'score_awarded' => $totalEarned,
+            ]);
 
         } elseif ($lab->type === 'bios_config') {
             // answers contains: boot_priority, xmp_enabled, fan_profile, secure_boot
@@ -471,7 +480,9 @@ class LabController extends Controller
                 'completed_at' => Carbon::now(),
             ]);
 
-            $attempt->labAssignment->update(['status' => 'completed']);
+            if ($attempt->labAssignment) {
+                $attempt->labAssignment->update(['status' => 'completed']);
+            }
 
             return redirect()->route('trainee.labs.show', $attempt->lab_assignment_id)->with('success', 'Repair report submitted for instructor review.');
         }
@@ -483,8 +494,9 @@ class LabController extends Controller
             'score' => $totalEarned,
         ]);
 
-        Score::create([
-            'trainee_attempt_id' => $attempt->id,
+        Score::updateOrCreate([
+            'trainee_attempt_id' => $attempt->id
+        ], [
             'component_score' => $componentScore,
             'assembly_score' => $assemblyScore,
             'diagnosis_score' => $diagnosisScore,
@@ -494,12 +506,16 @@ class LabController extends Controller
         ]);
 
         // Complete assignment status
-        $attempt->labAssignment->update(['status' => 'completed']);
+        if ($attempt->labAssignment) {
+            $attempt->labAssignment->update(['status' => 'completed']);
+        }
+
+        $labTitle = $lab->display_title ?? $lab->title;
 
         \App\Models\AuditLog::create([
             'user_id' => Auth::id(),
             'action' => 'LAB_SUBMIT',
-            'details' => "Completed lab '{$lab->title}' with score: " . round($totalEarned, 1) . "%",
+            'details' => "Completed lab '{$labTitle}' with score: " . round($totalEarned, 1) . "%",
             'ip_address' => request()->ip(),
         ]);
 

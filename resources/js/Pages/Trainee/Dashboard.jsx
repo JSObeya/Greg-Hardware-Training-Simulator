@@ -173,7 +173,7 @@ export default function TraineeDashboard({ assignments = [] }) {
                                             </span>
 
                                             <h4 className="text-base font-black text-white leading-snug group-hover:text-blue-400 transition">
-                                                {a.lab.title}
+                                                {a.lab.display_title || a.lab.title}
                                             </h4>
 
                                             <p className="text-xs text-slate-300 mt-2.5 line-clamp-3 leading-relaxed font-normal">
@@ -249,7 +249,7 @@ export default function TraineeDashboard({ assignments = [] }) {
                                 {completedAssignments.map((a) => {
                                     const bestAttempt = a.attempts
                                         ?.filter(att => att.status === 'graded')
-                                        ?.sort((x, y) => (y.score ?? 0) - (x.score ?? 0))[0];
+                                        ?.sort((x, y) => (Number(y.score) || 0) - (Number(x.score) || 0))[0];
 
                                     const typeMeta = getLabTypeMeta(a.lab.type);
 
@@ -261,7 +261,7 @@ export default function TraineeDashboard({ assignments = [] }) {
                                             <div>
                                                 <div className="flex items-center gap-1.5 text-xs font-bold text-white">
                                                     <span>{typeMeta.icon}</span>
-                                                    <span>{a.lab.title}</span>
+                                                    <span>{a.lab.display_title || a.lab.title}</span>
                                                 </div>
                                                 <span className="text-[10px] text-blue-400 block mt-0.5">
                                                     {a.lab.module?.title}
@@ -270,7 +270,7 @@ export default function TraineeDashboard({ assignments = [] }) {
 
                                             <div className="text-right shrink-0">
                                                 <div className="text-base font-black text-emerald-400">
-                                                    {bestAttempt ? `${Math.round(bestAttempt.score)}%` : 'Submitted'}
+                                                    {bestAttempt && bestAttempt.score !== null ? `${Math.round(Number(bestAttempt.score))}%` : 'Submitted'}
                                                 </div>
                                                 <Link
                                                     href={route('trainee.labs.show', a.id)}

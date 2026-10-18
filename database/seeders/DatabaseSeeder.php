@@ -107,7 +107,7 @@ class DatabaseSeeder extends Seeder
         // Lab 1: Safety and ESD Precautions (Module 2)
         $labSafety = Lab::firstOrCreate([
             'module_id' => $modules[2]->id,
-            'title' => 'Safety & Anti-Static ESD Protocols Workshop',
+            'title' => 'Lab 1: Safety & Anti-Static ESD Protocols Workshop',
         ], [
             'type' => 'assembly_sequence',
             'description' => 'Master electrostatic discharge (ESD) safety protocols, grounding procedures, and workspace preparation before touching delicate silicon chips.'
@@ -134,7 +134,7 @@ class DatabaseSeeder extends Seeder
         // Lab 2: Desktop Components Identification Workshop (Module 3)
         $labCompId = Lab::firstOrCreate([
             'module_id' => $modules[3]->id,
-            'title' => 'Desktop Components Identification Workshop',
+            'title' => 'Lab 2: Desktop Components Identification Workshop',
         ], [
             'type' => 'component_id',
             'description' => 'Identify central desktop internal units (CPU, RAM, GPU, PSU, Motherboard, Storage) and define their technical system roles.'
@@ -199,7 +199,7 @@ class DatabaseSeeder extends Seeder
         // Lab 3: Motherboard Hotspot Coordinates Lab (Module 4)
         $labHotspot = Lab::firstOrCreate([
             'module_id' => $modules[4]->id,
-            'title' => 'Motherboard Hotspot & Architecture Lab',
+            'title' => 'Lab 3: Motherboard Hotspot & Architecture Lab',
         ], [
             'type' => 'motherboard_hotspot',
             'description' => 'Pinpoint CPU Socket (LGA/AM4), Dual-Channel RAM DIMMs, PCIe x16 lane, SATA headers, and CMOS battery on the motherboard.'
@@ -232,7 +232,7 @@ class DatabaseSeeder extends Seeder
         // Lab 4: Storage Devices Configuration (Module 5)
         $labStorage = Lab::firstOrCreate([
             'module_id' => $modules[5]->id,
-            'title' => 'Storage Drive Mounting & Configuration Lab',
+            'title' => 'Lab 4: Storage Drive Mounting & Configuration Lab',
         ], [
             'type' => 'assembly_sequence',
             'description' => 'Install NVMe M.2 solid state drive with thermal heat spreader pad and mount 2.5-inch SATA SSD with 6Gbps data cable.'
@@ -259,7 +259,7 @@ class DatabaseSeeder extends Seeder
         // Lab 5: Modular PSU Cable Routing & Visual Wiring Canvas (Module 6)
         $labPsu = Lab::firstOrCreate([
             'module_id' => $modules[6]->id,
-            'title' => 'Modular PSU Cable Routing & Visual Wiring Canvas',
+            'title' => 'Lab 5: Modular PSU Cable Routing & Visual Wiring Canvas',
         ], [
             'type' => 'cable_pinout',
             'description' => 'Interactive schematic cabling workbench: Route modular PSU harnesses to ATX 24-Pin, EPS 8-Pin CPU 12V, PCIe 8-Pin GPU, SATA storage, and Front Panel jumpers. Test live voltage rails with digital multimeter and verify POST debug sequence.'
@@ -269,7 +269,7 @@ class DatabaseSeeder extends Seeder
         // Lab 6: CPU Alignment & Dual-Channel RAM Installation (Module 7)
         $labCpuRam = Lab::firstOrCreate([
             'module_id' => $modules[7]->id,
-            'title' => 'CPU Alignment & Dual-Channel RAM Installation',
+            'title' => 'Lab 6: CPU Alignment & Dual-Channel RAM Installation',
         ], [
             'type' => 'assembly_sequence',
             'description' => 'Align CPU processor gold triangle with socket pin 1, clamp retention lever, insert dual-channel RAM in slots A2/B2, and apply thermal paste.'
@@ -300,7 +300,7 @@ class DatabaseSeeder extends Seeder
         // Lab 7: Desktop Case Assembly Flow (Module 8)
         $labAssembly = Lab::firstOrCreate([
             'module_id' => $modules[8]->id,
-            'title' => 'Desktop Case Assembly Sequence Simulation',
+            'title' => 'Lab 7: Desktop Case Assembly Sequence Simulation',
         ], [
             'type' => 'assembly_sequence',
             'description' => 'Arrange computer build steps from safety grounding to final power tests.'
@@ -335,7 +335,7 @@ class DatabaseSeeder extends Seeder
         // Lab 8: Drag-and-Drop Chassis Build (Module 8)
         $labDrag = Lab::firstOrCreate([
             'module_id' => $modules[8]->id,
-            'title' => 'Chassis Drag-and-Drop Components Mount Simulator',
+            'title' => 'Lab 8: Chassis Drag-and-Drop Components Mount Simulator',
         ], [
             'type' => 'drag_drop_build',
             'description' => 'Assemble internal components graphically into the computer chassis case tray.'
@@ -366,7 +366,7 @@ class DatabaseSeeder extends Seeder
         // Lab 9: BIOS/UEFI Basics (Module 9)
         $labBios = Lab::firstOrCreate([
             'module_id' => $modules[9]->id,
-            'title' => 'BIOS / UEFI Setup & Boot Priority Configuration',
+            'title' => 'Lab 9: BIOS / UEFI Setup & Boot Priority Configuration',
         ], [
             'type' => 'bios_config',
             'description' => 'Interact with UEFI BIOS firmware setup: adjust Boot Device Priority order (USB Installer -> NVMe SSD), enable XMP memory frequency profile, calibrate CPU fan speeds, and save CMOS changes.'
@@ -376,7 +376,7 @@ class DatabaseSeeder extends Seeder
         // Lab 10: Preventive Maintenance (Module 10)
         $labMaintenance = Lab::firstOrCreate([
             'module_id' => $modules[10]->id,
-            'title' => 'Preventive Maintenance & Deep Cleaning Lab',
+            'title' => 'Lab 10: Preventive Maintenance & Deep Cleaning Lab',
         ], [
             'type' => 'preventive_maintenance',
             'description' => 'Perform routine computer hardware maintenance: dust removal with compressed air, holding fan blades, cleaning old thermal paste with 99% isopropyl alcohol, and checking cable routing.'
@@ -403,7 +403,7 @@ class DatabaseSeeder extends Seeder
         // Lab 11: Hardware POST Hex Code & Beep Diagnostics (Module 11)
         $labBeep = Lab::firstOrCreate([
             'module_id' => $modules[11]->id,
-            'title' => 'Hardware POST Hex Code & Beep Diagnostics',
+            'title' => 'Lab 11: Hardware POST Hex Code & Beep Diagnostics',
         ], [
             'type' => 'beep_code_diagnostic',
             'description' => 'Interpret 7-segment motherboard debug LED hex codes (Code 00, 55, A2, d6) and chassis speaker beep codes (1 Long 2 Short, Continuous loop) to identify failed hardware components.'
@@ -413,7 +413,7 @@ class DatabaseSeeder extends Seeder
         // Lab 12: Hardware Troubleshooting (Module 11)
         $labTrouble = Lab::firstOrCreate([
             'module_id' => $modules[11]->id,
-            'title' => 'Diagnose a Desktop That Will Not Power On',
+            'title' => 'Lab 12: Diagnose a Desktop That Will Not Power On',
         ], [
             'type' => 'troubleshooting',
             'description' => 'Isolate and diagnose a power issue safely step-by-step.'
@@ -458,7 +458,7 @@ class DatabaseSeeder extends Seeder
         // Lab 13: Hardware Troubleshooting - Overheating (Module 11)
         $labThermal = Lab::firstOrCreate([
             'module_id' => $modules[11]->id,
-            'title' => 'Diagnose Sudden Thermal Shutdown & Overheating',
+            'title' => 'Lab 13: Diagnose Sudden Thermal Shutdown & Overheating',
         ], [
             'type' => 'troubleshooting',
             'description' => 'Diagnose a desktop system that boots into Windows but abruptly shuts down after 3 minutes under load.'
@@ -498,7 +498,7 @@ class DatabaseSeeder extends Seeder
         // Lab 14: Repair Report (Module 12)
         $labReport = Lab::firstOrCreate([
             'module_id' => $modules[12]->id,
-            'title' => 'Service Audit Repair Report Worksheet',
+            'title' => 'Lab 14: Service Audit Repair Report Worksheet',
         ], [
             'type' => 'repair_report',
             'description' => 'Complete a manual maintenance log audit for a diagnosed device.'
@@ -508,7 +508,7 @@ class DatabaseSeeder extends Seeder
         // Lab 15: Final Practical Capstone Project (Module 13)
         $labCapstone = Lab::firstOrCreate([
             'module_id' => $modules[13]->id,
-            'title' => 'Final Capstone Practical Build & Verification',
+            'title' => 'Lab 15: Final Capstone Practical Build & Verification',
         ], [
             'type' => 'assembly_sequence',
             'description' => 'Execute complete end-to-end practical workstation build: ESD safety, motherboard mounting, dual-channel memory, NVMe SSD, cable management, and successful POST validation.'
