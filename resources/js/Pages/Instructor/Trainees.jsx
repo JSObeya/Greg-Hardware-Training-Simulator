@@ -454,11 +454,11 @@ export default function Trainees({
                                                 <button
                                                     type="button"
                                                     onClick={() => openEditCohortModal(cohort)}
-                                                    className="rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 text-xs font-bold transition flex items-center gap-1 shadow-sm"
+                                                    className="rounded-xl border border-blue-500 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 text-xs font-bold transition flex items-center gap-1.5 shadow-md"
                                                     title="Edit or Rename Cohort"
                                                 >
                                                     <span>✏️</span>
-                                                    <span>Edit</span>
+                                                    <span>Edit Cohort</span>
                                                 </button>
                                                 <button
                                                     type="button"

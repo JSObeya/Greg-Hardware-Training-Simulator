@@ -45,6 +45,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <NavLink href={route('admin.users.index')} active={route().current('admin.users.index')}>
                                             User Accounts
                                         </NavLink>
+                                        <NavLink href={route('instructor.trainees.index')} active={route().current('instructor.trainees.index') || route().current('instructor.cohorts.*')}>
+                                            👥 Training Cohorts
+                                        </NavLink>
                                         <NavLink href={route('instructor.labs.index')} active={route().current('instructor.labs.*')}>
                                             🔬 Simulation Labs
                                         </NavLink>
@@ -239,6 +242,9 @@ export default function AuthenticatedLayout({ header, children }) {
                             <>
                                 <ResponsiveNavLink href={route('admin.users.index')} active={route().current('admin.users.index')}>
                                     User Accounts
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('instructor.trainees.index')} active={route().current('instructor.trainees.index') || route().current('instructor.cohorts.*')}>
+                                    👥 Training Cohorts
                                 </ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('instructor.labs.index')} active={route().current('instructor.labs.*')}>
                                     🔬 Simulation Labs

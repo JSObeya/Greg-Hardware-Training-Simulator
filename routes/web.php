@@ -24,6 +24,14 @@ Route::get('/dashboard', function (\Illuminate\Http\Request $request) {
     return redirect()->route('trainee.dashboard');
 })->middleware(['auth'])->name('dashboard');
 
+// Universal direct shortcuts for Cohorts & Programmes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/cohorts', fn() => redirect()->route('instructor.trainees.index'))->name('cohorts.direct');
+    Route::get('/programmes', fn() => redirect()->route('instructor.courses.index'))->name('programmes.direct');
+    Route::get('/courses', fn() => redirect()->route('instructor.courses.index'))->name('courses.direct');
+    Route::get('/trainees', fn() => redirect()->route('instructor.trainees.index'))->name('trainees.direct');
+});
+
 // Admin Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Admin\AdminController::class, 'dashboard'])->name('dashboard');

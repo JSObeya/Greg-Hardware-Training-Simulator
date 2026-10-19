@@ -72,19 +72,27 @@
     ExpiresByType font/ttf "access plus 1 year"
     ExpiresByType application/vnd.ms-fontobject "access plus 1 year"
 
-    # HTML and dynamic data (Do not cache aggressively)
+    # HTML, JSON manifest, and dynamic data: NEVER cache
     ExpiresByType text/html "access plus 0 seconds"
+    ExpiresByType application/json "access plus 0 seconds"
 </IfModule>
 
 <IfModule mod_headers.c>
-    # Cache immutable build assets
-    <FilesMatch "\.(css|js|woff2|woff|ttf|svg)$">
+    # Cache fingerprinted/immutable build assets in public/build/assets/
+    <FilesMatch "^(?!manifest\.json).*\.(css|js|woff2|woff|ttf|svg)$">
         Header set Cache-Control "max-age=31536000, public, immutable"
     </FilesMatch>
 
-    # Disable caching for dynamic HTML pages
-    <FilesMatch "\.(php|html)$">
-        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    # Strictly forbid caching for manifest.json so asset updates are detected instantly
+    <FilesMatch "manifest\.json$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+
+    # Disable caching for dynamic scripts and pages
+    <FilesMatch "\.(php|html|json)$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
         Header set Pragma "no-cache"
         Header set Expires "0"
     </FilesMatch>

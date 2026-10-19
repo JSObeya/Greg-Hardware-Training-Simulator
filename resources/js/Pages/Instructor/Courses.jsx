@@ -271,7 +271,7 @@ export default function Courses({ courses = [] }) {
                                                 <button
                                                     type="button"
                                                     onClick={() => openEditCourseModal(course)}
-                                                    className="rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-2 text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+                                                    className="rounded-xl border border-blue-500 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 text-xs font-bold transition flex items-center gap-1.5 shadow-md"
                                                     title="Edit Programme details"
                                                 >
                                                     <span>✏️</span>
@@ -288,7 +288,7 @@ export default function Courses({ courses = [] }) {
                                                             order_index: (course.modules?.length || 0) + 1,
                                                         });
                                                     }}
-                                                    className="rounded-xl border border-sky-800/80 bg-sky-950/60 hover:bg-sky-900 text-sky-300 px-3.5 py-2 text-xs font-bold transition flex items-center gap-1.5"
+                                                    className="rounded-xl border border-sky-700 bg-sky-950/80 hover:bg-sky-900 text-sky-200 px-3.5 py-2 text-xs font-bold transition flex items-center gap-1.5"
                                                 >
                                                     <span>+</span>
                                                     <span>Add Pathway</span>
@@ -444,7 +444,7 @@ export default function Courses({ courses = [] }) {
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => openEditModuleModal(module)}
-                                                                    className="rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 text-xs font-bold transition flex items-center gap-1 shadow-sm"
+                                                                    className="rounded-xl border border-sky-500 bg-sky-600 hover:bg-sky-500 text-white px-3.5 py-1.5 text-xs font-bold transition flex items-center gap-1.5 shadow-md"
                                                                     title="Edit Pathway Title, Description & Sequence"
                                                                 >
                                                                     <span>✏️</span>

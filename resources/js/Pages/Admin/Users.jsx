@@ -267,6 +267,13 @@ export default function Users({ users, roles = [], tab = 'active', filters = {},
                     </div>
 
                     <div className="flex flex-wrap gap-2">
+                        <Link
+                            href={route('instructor.trainees.index')}
+                            className="rounded-xl border border-sky-800/80 bg-sky-950/60 hover:bg-sky-900 text-sky-200 px-3.5 py-2 text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+                        >
+                            <span>🎓</span>
+                            <span>Training Cohorts</span>
+                        </Link>
                         <button
                             onClick={() => setActiveDrawer(activeDrawer === 'bulk_csv' ? 'none' : 'bulk_csv')}
                             className={`rounded-xl px-3.5 py-2 text-xs font-bold transition flex items-center gap-1.5 ${
@@ -305,6 +312,26 @@ export default function Users({ users, roles = [], tab = 'active', filters = {},
 
             <div className="py-8 bg-slate-950 text-slate-100 min-h-[calc(100vh-65px)]">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
+
+                    {/* Training Cohorts Portal Banner */}
+                    <div className="rounded-2xl border border-sky-800/60 bg-gradient-to-r from-sky-950/40 via-slate-900 to-slate-900 p-4 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <span className="text-2xl">🎓</span>
+                            <div>
+                                <h4 className="text-sm font-bold text-white">Looking for Training Cohorts & Enrolments?</h4>
+                                <p className="text-xs text-slate-400 mt-0.5">
+                                    Manage and edit batch training cohorts, view live pass rates, and reassign student enrolments.
+                                </p>
+                            </div>
+                        </div>
+                        <Link
+                            href={route('instructor.trainees.index')}
+                            className="rounded-xl bg-sky-600 hover:bg-sky-500 text-white px-4 py-2 text-xs font-bold transition shadow-md shrink-0 flex items-center gap-1.5 self-start sm:self-center"
+                        >
+                            <span>Open Cohorts & Enrolments Dashboard</span>
+                            <span>&rarr;</span>
+                        </Link>
+                    </div>
 
                     {/* Form Drawers */}
                     {activeDrawer === 'single' && (
