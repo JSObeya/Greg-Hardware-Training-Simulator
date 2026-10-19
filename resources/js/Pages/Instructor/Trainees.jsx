@@ -2,22 +2,44 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, router, Link } from '@inertiajs/react';
 import { useState } from 'react';
 
-export default function Trainees({ trainees, tab = 'active', search: initSearch = '', counts = {} }) {
+export default function Trainees({
+    trainees,
+    tab = 'active',
+    search: initSearch = '',
+    counts = {},
+    cohortsSummary = [],
+    allCohorts = [],
+    selectedCohort = 'all',
+}) {
     const traineeData = trainees.data || trainees || [];
     const links = trainees.links || [];
 
     const [activeTab, setActiveTab] = useState('none'); // 'none', 'single', 'bulk_csv', 'bulk_grid'
     const [searchTerm, setSearchTerm] = useState(initSearch || '');
 
-    // Modals state
+    // Cohorts Modals State
+    const [editingCohort, setEditingCohort] = useState(null);
+    const [showNewCohortModal, setShowNewCohortModal] = useState(false);
+
+    const editCohortForm = useForm({
+        old_cohort: '',
+        new_cohort: '',
+    });
+
+    const newCohortForm = useForm({
+        name: '',
+    });
+
+    // Trainee Modals State
     const [editingTrainee, setEditingTrainee] = useState(null);
     const [passwordResetTrainee, setPasswordResetTrainee] = useState(null);
 
-    // Edit form
+    // Edit Trainee form
     const editForm = useForm({
         name: '',
         email: '',
         phone: '',
+        cohort: '',
         is_active: true,
     });
 
@@ -31,15 +53,17 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
         name: '',
         email: '',
         phone: '',
+        cohort: allCohorts[0] || 'Cohort 2026-A',
         password: '',
         is_active: true,
     });
 
     // Bulk dynamic grid form
+    const [bulkDefaultCohort, setBulkDefaultCohort] = useState(allCohorts[0] || 'Cohort 2026-A');
     const [gridRows, setGridRows] = useState([
-        { name: '', email: '', phone: '', password: 'Password@123' },
-        { name: '', email: '', phone: '', password: 'Password@123' },
-        { name: '', email: '', phone: '', password: 'Password@123' },
+        { name: '', email: '', phone: '', cohort: allCohorts[0] || 'Cohort 2026-A', password: 'Password@123' },
+        { name: '', email: '', phone: '', cohort: allCohorts[0] || 'Cohort 2026-A', password: 'Password@123' },
+        { name: '', email: '', phone: '', cohort: allCohorts[0] || 'Cohort 2026-A', password: 'Password@123' },
     ]);
     const [isSubmittingBulk, setIsSubmittingBulk] = useState(false);
 
@@ -47,14 +71,67 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
     const [parsedRows, setParsedRows] = useState([]);
     const [parseError, setParseError] = useState('');
 
-    const handleSearchSubmit = (e) => {
-        e?.preventDefault();
+    const handleFilterCohort = (cohortName) => {
         router.get(route('instructor.trainees.index'), {
             tab: tab,
+            cohort: cohortName,
             search: searchTerm || undefined,
         }, {
             preserveState: true,
             preserveScroll: true,
+        });
+    };
+
+    const handleSearchSubmit = (e) => {
+        e?.preventDefault();
+        router.get(route('instructor.trainees.index'), {
+            tab: tab,
+            cohort: selectedCohort,
+            search: searchTerm || undefined,
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const openEditCohortModal = (c) => {
+        setEditingCohort(c);
+        editCohortForm.setData({
+            old_cohort: c.name,
+            new_cohort: c.name,
+        });
+    };
+
+    const handleEditCohortSubmit = (e) => {
+        e.preventDefault();
+        if (!editingCohort) return;
+        editCohortForm.post(route('instructor.cohorts.update'), {
+            onSuccess: () => setEditingCohort(null),
+        });
+    };
+
+    const handleNewCohortSubmit = (e) => {
+        e.preventDefault();
+        newCohortForm.post(route('instructor.cohorts.store'), {
+            onSuccess: () => {
+                newCohortForm.reset();
+                setShowNewCohortModal(false);
+            },
+        });
+    };
+
+    const handleDeleteCohort = (cohortName) => {
+        const remainingCohorts = allCohorts.filter(c => c !== cohortName);
+        const defaultTarget = remainingCohorts[0] || 'Cohort 2026-A';
+        const target = prompt(
+            `Transfer all enrolled trainees from "${cohortName}" to another cohort before removing:\nEnter target cohort name:`,
+            defaultTarget
+        );
+        if (target === null) return;
+
+        router.post(route('instructor.cohorts.delete'), {
+            cohort: cohortName,
+            transfer_to: target.trim() || defaultTarget,
         });
     };
 
@@ -74,6 +151,7 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
             name: t.name,
             email: t.email,
             phone: t.phone || '',
+            cohort: t.cohort || allCohorts[0] || 'Cohort 2026-A',
             is_active: Boolean(t.is_active),
         });
     };
@@ -128,7 +206,7 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
     };
 
     const handleDownloadTemplate = () => {
-        const csvContent = "data:text/csv;charset=utf-8,Full Name,Email Address,Phone Number,Password\nJohn Doe,john@example.com,+2348000000000,Password@123\nJane Smith,jane@example.com,,Password@123";
+        const csvContent = "data:text/csv;charset=utf-8,Full Name,Email Address,Phone Number,Cohort,Password\nJohn Doe,john@example.com,+2348000000000,Cohort 2026-A,Password@123\nJane Smith,jane@example.com,,Cohort 2026-A,Password@123";
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
@@ -138,7 +216,7 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
         document.body.removeChild(link);
     };
 
-    const parseCsvContent = (text) => {
+    const parseCsvContent = (text, defaultC = bulkDefaultCohort) => {
         setParseError('');
         if (!text.trim()) {
             setParsedRows([]);
@@ -161,12 +239,18 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
 
             const cols = line.split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
             if (cols.length >= 2) {
-                const [name, email, phone, password] = cols;
+                const name = cols[0];
+                const email = cols[1];
+                const phone = cols[2] || '';
+                const cohort = cols[3] && !cols[3].includes('@') && isNaN(cols[3]) ? cols[3] : defaultC;
+                const password = cols[4] || (cols[3] && cols[3].length >= 6 ? cols[3] : 'Password@123');
+
                 if (email && email.includes('@')) {
                     results.push({
                         name: name || 'Trainee ' + (results.length + 1),
                         email: email,
                         phone: phone || '',
+                        cohort: cohort || defaultC,
                         password: password || 'Password@123'
                     });
                 }
@@ -209,7 +293,7 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
     };
 
     const handleAddGridRow = () => {
-        setGridRows([...gridRows, { name: '', email: '', phone: '', password: 'Password@123' }]);
+        setGridRows([...gridRows, { name: '', email: '', phone: '', cohort: bulkDefaultCohort, password: 'Password@123' }]);
     };
 
     const handleRemoveGridRow = (index) => {
@@ -236,8 +320,8 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
             onFinish: () => setIsSubmittingBulk(false),
             onSuccess: () => {
                 setGridRows([
-                    { name: '', email: '', phone: '', password: 'Password@123' },
-                    { name: '', email: '', phone: '', password: 'Password@123' },
+                    { name: '', email: '', phone: '', cohort: bulkDefaultCohort, password: 'Password@123' },
+                    { name: '', email: '', phone: '', cohort: bulkDefaultCohort, password: 'Password@123' },
                 ]);
                 setActiveTab('none');
             }
@@ -249,15 +333,25 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
             header={
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h2 className="text-xl font-bold leading-tight text-white">
-                            👥 Trainee Management & Directory
-                        </h2>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xl">👥</span>
+                            <h2 className="text-xl font-bold leading-tight text-white">
+                                Training Cohorts & Trainees
+                            </h2>
+                        </div>
                         <p className="text-xs text-slate-400 mt-1">
-                            Manage student accounts, soft deletes, account suspensions, and cohort bulk registration.
+                            Manage training cohorts, track batch enrolments, reset credentials, and oversee lab completions.
                         </p>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
+                        <button
+                            onClick={() => setShowNewCohortModal(true)}
+                            className="rounded-xl border border-sky-800/80 bg-sky-950/60 hover:bg-sky-900 text-sky-200 px-3.5 py-2 text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+                        >
+                            <span>🎓</span>
+                            <span>+ New Cohort</span>
+                        </button>
                         <button
                             onClick={() => setActiveTab(activeTab === 'bulk_csv' ? 'none' : 'bulk_csv')}
                             className={`rounded-xl px-3.5 py-2 text-xs font-bold transition flex items-center gap-1.5 ${
@@ -292,17 +386,152 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
                 </div>
             }
         >
-            <Head title="Trainees Directory" />
+            <Head title="Training Cohorts & Trainees" />
 
             <div className="py-8 bg-slate-950 text-slate-100 min-h-[calc(100vh-65px)]">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
+
+                    {/* SECTION: Training Cohorts & Enrolments Cards */}
+                    <div className="space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-800 pb-2">
+                            <div>
+                                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                                    <span>🎓</span>
+                                    <span>Training Cohorts & Enrolments</span>
+                                </h3>
+                                <p className="text-xs text-slate-400">
+                                    Live batch metrics, cohort pass rates, and enrolment editing. Click "✏️ Edit Cohort" to rename or manage.
+                                </p>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                {selectedCohort !== 'all' && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleFilterCohort('all')}
+                                        className="rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 px-3 py-1 text-[11px] font-bold transition flex items-center gap-1"
+                                    >
+                                        <span>Filtered: {selectedCohort}</span>
+                                        <span className="text-rose-400">✕ Clear</span>
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewCohortModal(true)}
+                                    className="rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 px-3 py-1.5 text-xs font-bold transition flex items-center gap-1 shadow-sm"
+                                >
+                                    <span>+ Add Cohort</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Cohort Cards Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {cohortsSummary.map((cohort) => {
+                                const isSelected = selectedCohort === cohort.name;
+                                return (
+                                    <div
+                                        key={cohort.name}
+                                        className={`rounded-2xl border p-5 shadow-lg transition flex flex-col justify-between space-y-4 ${
+                                            isSelected
+                                                ? 'border-blue-500 bg-slate-900 ring-2 ring-blue-500/30'
+                                                : 'border-slate-800 bg-slate-900/90 hover:border-slate-700'
+                                        }`}
+                                    >
+                                        {/* Cohort Card Header */}
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div>
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-950 text-blue-300 border border-blue-800/80">
+                                                    Cohort
+                                                </span>
+                                                <h4 className="text-base font-extrabold text-white mt-1">
+                                                    {cohort.name}
+                                                </h4>
+                                            </div>
+
+                                            {/* Edit & Delete Actions for Cohort Card */}
+                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openEditCohortModal(cohort)}
+                                                    className="rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 text-xs font-bold transition flex items-center gap-1 shadow-sm"
+                                                    title="Edit or Rename Cohort"
+                                                >
+                                                    <span>✏️</span>
+                                                    <span>Edit</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteCohort(cohort.name)}
+                                                    className="rounded-xl border border-rose-800/80 bg-rose-950/60 hover:bg-rose-900 text-rose-300 px-2 py-1 text-xs font-bold transition"
+                                                    title="Delete or Merge Cohort"
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Metrics Row */}
+                                        <div className="grid grid-cols-3 gap-2 bg-slate-950/70 border border-slate-800/80 rounded-xl p-3 text-center">
+                                            <div>
+                                                <div className="text-lg font-black text-white">{cohort.total_trainees}</div>
+                                                <div className="text-[10px] uppercase font-bold text-slate-400">Enrolled</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-lg font-black text-emerald-400">{cohort.active_trainees}</div>
+                                                <div className="text-[10px] uppercase font-bold text-slate-400">Active</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-lg font-black text-amber-400">{cohort.suspended_trainees}</div>
+                                                <div className="text-[10px] uppercase font-bold text-slate-400">Suspended</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Performance Bar */}
+                                        <div className="space-y-1.5 text-xs">
+                                            <div className="flex justify-between items-center text-[11px]">
+                                                <span className="text-slate-400 font-medium">
+                                                    {cohort.submissions_count} Lab Submissions
+                                                </span>
+                                                <span className={`font-bold ${cohort.pass_rate >= 70 ? 'text-emerald-400' : cohort.pass_rate >= 40 ? 'text-amber-400' : 'text-slate-400'}`}>
+                                                    {cohort.pass_rate}% Pass Rate
+                                                </span>
+                                            </div>
+                                            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                                                <div
+                                                    className={`h-2 rounded-full transition-all duration-500 ${
+                                                        cohort.pass_rate >= 70 ? 'bg-emerald-500' : cohort.pass_rate >= 40 ? 'bg-amber-500' : 'bg-blue-500'
+                                                    }`}
+                                                    style={{ width: `${Math.max(5, Math.min(100, cohort.pass_rate))}%` }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Card Footer Filter Button */}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleFilterCohort(isSelected ? 'all' : cohort.name)}
+                                            className={`w-full rounded-xl py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                                                isSelected
+                                                    ? 'bg-blue-600 text-white shadow-md'
+                                                    : 'border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-300'
+                                            }`}
+                                        >
+                                            <span>{isSelected ? '✓ Showing This Cohort' : 'Filter Directory by Cohort'}</span>
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
 
                     {/* Single Registration Drawer */}
                     {activeTab === 'single' && (
                         <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl p-6 max-w-xl mx-auto">
                             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-                                <h3 className="text-base font-bold text-white">
-                                    Register Single Trainee
+                                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                                    <span>👤</span>
+                                    <span>Register Single Trainee</span>
                                 </h3>
                                 <button
                                     onClick={() => setActiveTab('none')}
@@ -356,6 +585,21 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
 
                                 <div>
                                     <label className="block font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                        Training Cohort
+                                    </label>
+                                    <select
+                                        value={singleForm.data.cohort}
+                                        onChange={(e) => singleForm.setData('cohort', e.target.value)}
+                                        className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                    >
+                                        {allCohorts.map(c => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block font-bold text-slate-400 uppercase tracking-wider mb-1">
                                         Temporary Password
                                     </label>
                                     <input
@@ -384,8 +628,9 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
                         <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl p-6 max-w-3xl mx-auto">
                             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
                                 <div>
-                                    <h3 className="text-base font-bold text-white">
-                                        Bulk Import Trainees via CSV
+                                    <h3 className="text-base font-bold text-white flex items-center gap-2">
+                                        <span>📁</span>
+                                        <span>Bulk Import Trainees via CSV</span>
                                     </h3>
                                     <p className="text-xs text-slate-400 mt-0.5">
                                         Upload a CSV spreadsheet or paste text to batch register students.
@@ -409,11 +654,29 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
                             </div>
 
                             <form onSubmit={handleBulkSubmitCsv} className="space-y-4 text-xs">
+                                <div className="flex items-center gap-3">
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0">
+                                        Default Target Cohort:
+                                    </label>
+                                    <select
+                                        value={bulkDefaultCohort}
+                                        onChange={(e) => {
+                                            setBulkDefaultCohort(e.target.value);
+                                            parseCsvContent(csvText, e.target.value);
+                                        }}
+                                        className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-white"
+                                    >
+                                        {allCohorts.map(c => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="border-2 border-dashed border-slate-700 rounded-2xl p-4 flex flex-col items-center justify-center text-center bg-slate-950">
                                         <span className="text-2xl mb-1">📄</span>
                                         <span className="text-xs font-bold text-slate-200">Choose CSV File</span>
-                                        <span className="text-[10px] text-slate-400 mb-3">Columns: Full Name, Email, Phone, Password</span>
+                                        <span className="text-[10px] text-slate-400 mb-3">Columns: Full Name, Email, Phone, Cohort, Password</span>
                                         <input
                                             type="file"
                                             accept=".csv,text/csv,text/plain"
@@ -430,10 +693,10 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
                                             value={csvText}
                                             onChange={(e) => {
                                                 setCsvText(e.target.value);
-                                                parseCsvContent(e.target.value);
+                                                parseCsvContent(e.target.value, bulkDefaultCohort);
                                             }}
                                             rows="4"
-                                            placeholder="Full Name, Email, Phone, Password&#10;Alice Smith, alice@school.local, +234..., Password@123"
+                                            placeholder="Full Name, Email, Phone, Cohort, Password&#10;Alice Smith, alice@school.local, +234..., Cohort 2026-A, Password@123"
                                             className="w-full rounded-xl border border-slate-700 bg-slate-950 p-2.5 text-xs text-white font-mono focus:ring-1 focus:ring-blue-500"
                                         />
                                     </div>
@@ -458,6 +721,7 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
                                                         <th className="px-3 py-2">#</th>
                                                         <th className="px-3 py-2">Full Name</th>
                                                         <th className="px-3 py-2">Email</th>
+                                                        <th className="px-3 py-2">Cohort</th>
                                                         <th className="px-3 py-2">Password</th>
                                                     </tr>
                                                 </thead>
@@ -467,6 +731,7 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
                                                             <td className="px-3 py-1.5 font-mono text-[10px] text-slate-400">{idx + 1}</td>
                                                             <td className="px-3 py-1.5 font-medium">{row.name}</td>
                                                             <td className="px-3 py-1.5 font-mono text-[11px]">{row.email}</td>
+                                                            <td className="px-3 py-1.5 text-blue-300 font-medium">{row.cohort || bulkDefaultCohort}</td>
                                                             <td className="px-3 py-1.5 font-mono text-[11px] text-slate-400">{row.password ? '••••••••' : 'Password@123'}</td>
                                                         </tr>
                                                     ))}
@@ -505,8 +770,9 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
                         <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl p-6 max-w-4xl mx-auto">
                             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
                                 <div>
-                                    <h3 className="text-base font-bold text-white">
-                                        Quick Batch Trainee Entry Grid
+                                    <h3 className="text-base font-bold text-white flex items-center gap-2">
+                                        <span>⚡</span>
+                                        <span>Quick Batch Trainee Entry Grid</span>
                                     </h3>
                                     <p className="text-xs text-slate-400 mt-0.5">
                                         Quickly key in multiple trainees. Passwords default to <code className="text-indigo-400 font-mono">Password@123</code>.
@@ -530,21 +796,30 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
                                                 placeholder="Full Name"
                                                 value={row.name}
                                                 onChange={(e) => handleGridRowChange(idx, 'name', e.target.value)}
-                                                className="w-1/3 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white placeholder-slate-500"
+                                                className="w-1/4 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white placeholder-slate-500"
                                             />
                                             <input
                                                 type="email"
                                                 placeholder="Email Address"
                                                 value={row.email}
                                                 onChange={(e) => handleGridRowChange(idx, 'email', e.target.value)}
-                                                className="w-1/3 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white placeholder-slate-500"
+                                                className="w-1/4 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white placeholder-slate-500"
                                             />
+                                            <select
+                                                value={row.cohort}
+                                                onChange={(e) => handleGridRowChange(idx, 'cohort', e.target.value)}
+                                                className="w-1/4 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white"
+                                            >
+                                                {allCohorts.map(c => (
+                                                    <option key={c} value={c}>{c}</option>
+                                                ))}
+                                            </select>
                                             <input
                                                 type="text"
-                                                placeholder="Password (Default: Password@123)"
+                                                placeholder="Password"
                                                 value={row.password}
                                                 onChange={(e) => handleGridRowChange(idx, 'password', e.target.value)}
-                                                className="w-1/4 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white placeholder-slate-500 font-mono"
+                                                className="w-1/6 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white placeholder-slate-500 font-mono"
                                             />
                                             <button
                                                 type="button"
@@ -590,30 +865,47 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
 
                     {/* Trainee Directory Table Card */}
                     <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl">
-                        {/* Header Tabs and Search Bar */}
-                        <div className="p-6 border-b border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                            <div className="inline-flex rounded-xl bg-slate-950 p-1 border border-slate-800">
-                                <Link
-                                    href={route('instructor.trainees.index', { tab: 'active', search: searchTerm || undefined })}
-                                    className={`rounded-lg px-4 py-1.5 text-xs font-bold transition ${
-                                        tab === 'active'
-                                            ? 'bg-blue-600 text-white shadow-sm'
-                                            : 'text-slate-400 hover:text-white'
-                                    }`}
-                                >
-                                    Active Trainees ({counts.active || 0})
-                                </Link>
-                                <Link
-                                    href={route('instructor.trainees.index', { tab: 'trash', search: searchTerm || undefined })}
-                                    className={`rounded-lg px-4 py-1.5 text-xs font-bold transition flex items-center gap-1.5 ${
-                                        tab === 'trash'
-                                            ? 'bg-rose-600 text-white shadow-sm'
-                                            : 'text-slate-400 hover:text-white'
-                                    }`}
-                                >
-                                    <span>🗑️ Trash</span>
-                                    <span>({counts.trash || 0})</span>
-                                </Link>
+                        {/* Header Tabs, Cohort Selector and Search Bar */}
+                        <div className="p-6 border-b border-slate-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                            <div className="flex flex-wrap items-center gap-3">
+                                <div className="inline-flex rounded-xl bg-slate-950 p-1 border border-slate-800">
+                                    <Link
+                                        href={route('instructor.trainees.index', { tab: 'active', cohort: selectedCohort, search: searchTerm || undefined })}
+                                        className={`rounded-lg px-4 py-1.5 text-xs font-bold transition ${
+                                            tab === 'active'
+                                                ? 'bg-blue-600 text-white shadow-sm'
+                                                : 'text-slate-400 hover:text-white'
+                                        }`}
+                                    >
+                                        Active Trainees ({counts.active || 0})
+                                    </Link>
+                                    <Link
+                                        href={route('instructor.trainees.index', { tab: 'trash', cohort: selectedCohort, search: searchTerm || undefined })}
+                                        className={`rounded-lg px-4 py-1.5 text-xs font-bold transition flex items-center gap-1.5 ${
+                                            tab === 'trash'
+                                                ? 'bg-rose-600 text-white shadow-sm'
+                                                : 'text-slate-400 hover:text-white'
+                                        }`}
+                                    >
+                                        <span>🗑️ Trash</span>
+                                        <span>({counts.trash || 0})</span>
+                                    </Link>
+                                </div>
+
+                                {/* Cohort Dropdown Filter */}
+                                <div className="flex items-center gap-1.5 text-xs">
+                                    <span className="text-slate-400 font-semibold">Cohort:</span>
+                                    <select
+                                        value={selectedCohort}
+                                        onChange={(e) => handleFilterCohort(e.target.value)}
+                                        className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-white focus:ring-1 focus:ring-blue-500"
+                                    >
+                                        <option value="all">All Cohorts</option>
+                                        {allCohorts.map(c => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
                             <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
@@ -639,6 +931,14 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
                                 <p className="font-semibold text-sm text-slate-300">
                                     {tab === 'trash' ? 'Trash bin is empty.' : 'No trainee accounts found.'}
                                 </p>
+                                {selectedCohort !== 'all' && (
+                                    <button
+                                        onClick={() => handleFilterCohort('all')}
+                                        className="mt-3 text-xs text-blue-400 hover:underline"
+                                    >
+                                        Clear cohort filter ({selectedCohort})
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
@@ -646,6 +946,7 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
                                     <thead className="bg-slate-950 border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider">
                                         <tr>
                                             <th className="px-6 py-3.5">Trainee</th>
+                                            <th className="px-6 py-3.5">Cohort</th>
                                             <th className="px-6 py-3.5">Contact</th>
                                             <th className="px-6 py-3.5">Status</th>
                                             <th className="px-6 py-3.5">Labs Progress</th>
@@ -662,6 +963,12 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
                                                     <div className="text-[10px] text-slate-400 font-mono">
                                                         ID: #{t.id} &bull; Joined: {new Date(t.created_at).toLocaleDateString()}
                                                     </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className="inline-flex items-center gap-1 rounded-md bg-slate-800 text-blue-300 border border-slate-700 px-2 py-0.5 text-[11px] font-semibold">
+                                                        <span>🏷️</span>
+                                                        <span>{t.cohort || 'Cohort 2026-A'}</span>
+                                                    </span>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="font-mono text-[11px] text-slate-200">
@@ -780,6 +1087,105 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
                 </div>
             </div>
 
+            {/* Edit Cohort Modal */}
+            {editingCohort && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-md rounded-2xl bg-slate-900 p-6 shadow-2xl border border-slate-700 space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <div className="flex items-center gap-2">
+                                <span className="text-lg">✏️</span>
+                                <h3 className="text-base font-bold text-white">Edit Training Cohort</h3>
+                            </div>
+                            <button onClick={() => setEditingCohort(null)} className="text-slate-400 hover:text-white">✕</button>
+                        </div>
+
+                        <form onSubmit={handleEditCohortSubmit} className="space-y-4 text-xs">
+                            <div>
+                                <label className="block font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                    Cohort Name / Identification
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editCohortForm.data.new_cohort}
+                                    onChange={e => editCohortForm.setData('new_cohort', e.target.value)}
+                                    className="w-full rounded-xl border border-slate-700 bg-slate-950 p-2.5 text-xs text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    required
+                                    placeholder="e.g. Cohort 2026-A"
+                                />
+                                <p className="text-[11px] text-slate-400 mt-1">
+                                    Updating this name will immediately update all <strong>{editingCohort.total_trainees}</strong> enrolled trainees.
+                                </p>
+                            </div>
+
+                            <div className="flex gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingCohort(null)}
+                                    className="w-1/2 rounded-xl bg-slate-800 hover:bg-slate-700 py-2.5 text-xs font-bold text-slate-300"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={editCohortForm.processing}
+                                    className="w-1/2 rounded-xl bg-blue-600 hover:bg-blue-500 py-2.5 text-xs font-bold text-white shadow-md disabled:opacity-50"
+                                >
+                                    {editCohortForm.processing ? 'Saving...' : 'Save Cohort'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Create New Cohort Modal */}
+            {showNewCohortModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-md rounded-2xl bg-slate-900 p-6 shadow-2xl border border-slate-700 space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <div className="flex items-center gap-2">
+                                <span className="text-lg">🎓</span>
+                                <h3 className="text-base font-bold text-white">Create New Training Cohort</h3>
+                            </div>
+                            <button onClick={() => setShowNewCohortModal(false)} className="text-slate-400 hover:text-white">✕</button>
+                        </div>
+
+                        <form onSubmit={handleNewCohortSubmit} className="space-y-4 text-xs">
+                            <div>
+                                <label className="block font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                    Cohort Name / Batch Title
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newCohortForm.data.name}
+                                    onChange={e => newCohortForm.setData('name', e.target.value)}
+                                    className="w-full rounded-xl border border-slate-700 bg-slate-950 p-2.5 text-xs text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+                                    required
+                                    placeholder="e.g. Cohort 2026-C or Hardware Masterclass"
+                                />
+                            </div>
+
+                            <div className="flex gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewCohortModal(false)}
+                                    className="w-1/2 rounded-xl bg-slate-800 hover:bg-slate-700 py-2.5 text-xs font-bold text-slate-300"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={newCohortForm.processing}
+                                    className="w-1/2 rounded-xl bg-sky-600 hover:bg-sky-500 py-2.5 text-xs font-bold text-white shadow-md disabled:opacity-50"
+                                >
+                                    {newCohortForm.processing ? 'Creating...' : 'Establish Cohort'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {/* Edit Trainee Modal */}
             {editingTrainee && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
@@ -822,6 +1228,19 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
                                 />
                             </div>
 
+                            <div>
+                                <label className="block font-bold text-slate-400 uppercase tracking-wider mb-1">Assigned Cohort</label>
+                                <select
+                                    value={editForm.data.cohort}
+                                    onChange={e => editForm.setData('cohort', e.target.value)}
+                                    className="w-full rounded-xl border border-slate-700 bg-slate-950 p-2.5 text-xs text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                >
+                                    {allCohorts.map(c => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <div className="flex items-center gap-2 pt-1">
                                 <input
                                     type="checkbox"
@@ -846,7 +1265,7 @@ export default function Trainees({ trainees, tab = 'active', search: initSearch 
                                 <button
                                     type="submit"
                                     disabled={editForm.processing}
-                                    className="w-1/2 rounded-xl bg-blue-600 hover:bg-blue-500 py-2.5 text-xs font-bold text-white shadow-md"
+                                    className="w-1/2 rounded-xl bg-blue-600 hover:bg-blue-500 py-2.5 text-xs font-bold text-white shadow-md disabled:opacity-50"
                                 >
                                     Save Changes
                                 </button>

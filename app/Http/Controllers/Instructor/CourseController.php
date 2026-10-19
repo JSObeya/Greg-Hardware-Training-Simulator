@@ -90,4 +90,17 @@ class CourseController extends Controller
         $module->delete();
         return redirect()->route('instructor.courses.index')->with('success', 'Module deleted successfully!');
     }
+
+    public function updateModule(Request $request, Module $module)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'order_index' => 'nullable|integer',
+        ]);
+
+        $module->update($request->only('title', 'description', 'order_index'));
+
+        return redirect()->route('instructor.courses.index')->with('success', 'Pathway module updated successfully!');
+    }
 }

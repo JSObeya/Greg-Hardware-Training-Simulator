@@ -15,10 +15,41 @@ use Inertia\Inertia;
 
 class TraineeController extends Controller
 {
+    private function getStoredCohorts(): array
+    {
+        $defaultCohorts = ['Cohort 2026-A', 'Cohort 2026-B', 'Accelerated Bootcamp'];
+        $path = storage_path('app/cohorts.json');
+        
+        $saved = [];
+        if (file_exists($path)) {
+            $content = @file_get_contents($path);
+            $saved = json_decode($content, true) ?: [];
+        }
+        
+        $dbCohorts = User::whereNotNull('cohort')
+            ->where('cohort', '!=', '')
+            ->distinct()
+            ->pluck('cohort')
+            ->toArray();
+
+        return array_values(array_unique(array_filter(array_merge($defaultCohorts, $saved, $dbCohorts))));
+    }
+
+    private function saveStoredCohorts(array $cohorts): void
+    {
+        $path = storage_path('app/cohorts.json');
+        $dir = dirname($path);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        @file_put_contents($path, json_encode(array_values(array_unique(array_filter($cohorts))), JSON_PRETTY_PRINT));
+    }
+
     public function index(Request $request)
     {
         $tab = $request->query('tab', 'active'); // 'active' or 'trash'
         $search = $request->query('search');
+        $cohort = $request->query('cohort', 'all');
 
         $query = User::whereHas('role', function ($query) {
             $query->where('name', 'trainee');
@@ -43,15 +74,68 @@ class TraineeController extends Controller
             });
         }
 
+        if ($cohort !== 'all' && !empty($cohort)) {
+            if ($cohort === 'Cohort 2026-A') {
+                $query->where(function ($q) {
+                    $q->where('cohort', 'Cohort 2026-A')->orWhereNull('cohort')->orWhere('cohort', '');
+                });
+            } else {
+                $query->where('cohort', $cohort);
+            }
+        }
+
         $trainees = $query->orderBy('name')->paginate(20)->withQueryString();
 
         $activeCount = User::whereHas('role', fn($q) => $q->where('name', 'trainee'))->withoutTrashed()->count();
         $trashedCount = User::whereHas('role', fn($q) => $q->where('name', 'trainee'))->onlyTrashed()->count();
 
+        // Cohort summaries for Training Cohorts & Enrolments Cards
+        $allCohorts = $this->getStoredCohorts();
+
+        $cohortsSummary = collect($allCohorts)->map(function ($cName) {
+            $isDefaultA = ($cName === 'Cohort 2026-A');
+            $userQuery = User::whereHas('role', fn($q) => $q->where('name', 'trainee'))->withoutTrashed();
+            if ($isDefaultA) {
+                $userQuery->where(function ($q) use ($cName) {
+                    $q->where('cohort', $cName)->orWhereNull('cohort')->orWhere('cohort', '');
+                });
+            } else {
+                $userQuery->where('cohort', $cName);
+            }
+
+            $total = (clone $userQuery)->count();
+            $active = (clone $userQuery)->where('is_active', 1)->count();
+            $suspended = (clone $userQuery)->where('is_active', 0)->count();
+
+            $attemptQuery = \App\Models\TraineeAttempt::whereHas('trainee', function ($q) use ($cName, $isDefaultA) {
+                if ($isDefaultA) {
+                    $q->where('cohort', $cName)->orWhereNull('cohort')->orWhere('cohort', '');
+                } else {
+                    $q->where('cohort', $cName);
+                }
+            });
+
+            $submissions = (clone $attemptQuery)->count();
+            $passed = (clone $attemptQuery)->where('score', '>=', 70)->count();
+            $passRate = $submissions > 0 ? round(($passed / $submissions) * 100) : 0;
+
+            return [
+                'name' => $cName,
+                'total_trainees' => $total,
+                'active_trainees' => $active,
+                'suspended_trainees' => $suspended,
+                'submissions_count' => $submissions,
+                'pass_rate' => $passRate,
+            ];
+        });
+
         return Inertia::render('Instructor/Trainees', [
             'trainees' => $trainees,
             'tab' => $tab,
             'search' => $search,
+            'selectedCohort' => $cohort,
+            'cohortsSummary' => $cohortsSummary,
+            'allCohorts' => $allCohorts,
             'counts' => [
                 'active' => $activeCount,
                 'trash' => $trashedCount,
@@ -252,10 +336,13 @@ class TraineeController extends Controller
                 continue;
             }
 
+            $cohort = !empty($row['cohort']) ? trim($row['cohort']) : 'Cohort 2026-A';
+
             $user = User::create([
                 'name' => $name,
                 'email' => $email,
                 'phone' => $phone,
+                'cohort' => $cohort,
                 'password' => Hash::make($password),
                 'role_id' => $traineeRole->id,
                 'is_active' => true,
@@ -288,5 +375,104 @@ class TraineeController extends Controller
         }
 
         return redirect()->route('instructor.trainees.index')->with('success', $message);
+    }
+
+    /**
+     * Rename an existing cohort across all enrolled trainees.
+     */
+    public function updateCohort(Request $request)
+    {
+        $request->validate([
+            'old_cohort' => 'required|string|max:100',
+            'new_cohort' => 'required|string|max:100',
+        ]);
+
+        $oldName = trim($request->old_cohort);
+        $newName = trim($request->new_cohort);
+
+        // Update trainees in database
+        $query = User::where('cohort', $oldName);
+        if ($oldName === 'Cohort 2026-A' || $oldName === 'Unassigned') {
+            $query->orWhereNull('cohort')->orWhere('cohort', '');
+        }
+        $affected = $query->update(['cohort' => $newName]);
+
+        // Update stored list
+        $cohorts = $this->getStoredCohorts();
+        $cohorts = array_map(fn($c) => $c === $oldName ? $newName : $c, $cohorts);
+        if (!in_array($newName, $cohorts)) {
+            $cohorts[] = $newName;
+        }
+        $this->saveStoredCohorts($cohorts);
+
+        AuditLog::create([
+            'user_id' => auth()->id() ?? 1,
+            'action' => 'COHORT_RENAME',
+            'details' => "Renamed cohort '{$oldName}' to '{$newName}' ({$affected} trainees updated)",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->back()->with('success', "Cohort updated to '{$newName}'. {$affected} enrolled trainee(s) updated successfully.");
+    }
+
+    /**
+     * Store/create a new cohort.
+     */
+    public function storeCohort(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:100',
+        ]);
+
+        $cohortName = trim($request->name);
+        $cohorts = $this->getStoredCohorts();
+        if (!in_array($cohortName, $cohorts)) {
+            $cohorts[] = $cohortName;
+            $this->saveStoredCohorts($cohorts);
+        }
+
+        AuditLog::create([
+            'user_id' => auth()->id() ?? 1,
+            'action' => 'COHORT_CREATE',
+            'details' => "Established new training cohort: '{$cohortName}'",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->back()->with('success', "Training Cohort '{$cohortName}' created and ready for student enrolments.");
+    }
+
+    /**
+     * Delete or merge a cohort, reassigning students.
+     */
+    public function deleteCohort(Request $request)
+    {
+        $request->validate([
+            'cohort' => 'required|string',
+            'transfer_to' => 'nullable|string',
+        ]);
+
+        $cohort = trim($request->cohort);
+        $targetCohort = trim($request->input('transfer_to', 'Cohort 2026-A'));
+
+        $query = User::where('cohort', $cohort);
+        if ($cohort === 'Cohort 2026-A') {
+            $query->orWhereNull('cohort')->orWhere('cohort', '');
+        }
+        $affected = $query->update(['cohort' => $targetCohort]);
+
+        $cohorts = array_values(array_filter($this->getStoredCohorts(), fn($c) => $c !== $cohort));
+        if (!in_array($targetCohort, $cohorts)) {
+            $cohorts[] = $targetCohort;
+        }
+        $this->saveStoredCohorts($cohorts);
+
+        AuditLog::create([
+            'user_id' => auth()->id() ?? 1,
+            'action' => 'COHORT_DELETE',
+            'details' => "Deleted cohort '{$cohort}', {$affected} trainees reassigned to '{$targetCohort}'",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->back()->with('success', "Cohort '{$cohort}' removed. {$affected} trainee(s) reassigned to '{$targetCohort}'.");
     }
 }

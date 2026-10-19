@@ -49,7 +49,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                             🔬 Simulation Labs
                                         </NavLink>
                                         <NavLink href={route('instructor.courses.index')} active={route().current('instructor.courses.*')}>
-                                            Course Editor
+                                            📚 Academic Programmes
                                         </NavLink>
                                         <NavLink href={route('instructor.submissions.index')} active={route().current('instructor.submissions.*')}>
                                             Gradebook
@@ -68,14 +68,14 @@ export default function AuthenticatedLayout({ header, children }) {
 
                                 {user.role?.name === 'instructor' && (
                                     <>
-                                        <NavLink href={route('instructor.trainees.index')} active={route().current('instructor.trainees.index')}>
-                                            Trainee Accounts
+                                        <NavLink href={route('instructor.trainees.index')} active={route().current('instructor.trainees.index') || route().current('instructor.cohorts.*')}>
+                                            👥 Training Cohorts
                                         </NavLink>
                                         <NavLink href={route('instructor.labs.index')} active={route().current('instructor.labs.*')}>
                                             🔬 Simulation Labs
                                         </NavLink>
                                         <NavLink href={route('instructor.courses.index')} active={route().current('instructor.courses.*')}>
-                                            Course Editor
+                                            📚 Academic Programmes
                                         </NavLink>
                                         <NavLink href={route('instructor.submissions.index')} active={route().current('instructor.submissions.*')}>
                                             Gradebook
@@ -244,7 +244,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                     🔬 Simulation Labs
                                 </ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('instructor.courses.index')} active={route().current('instructor.courses.*')}>
-                                    Course Editor
+                                    📚 Academic Programmes
                                 </ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('instructor.submissions.index')} active={route().current('instructor.submissions.*')}>
                                     Gradebook
@@ -263,14 +263,14 @@ export default function AuthenticatedLayout({ header, children }) {
 
                         {user.role?.name === 'instructor' && (
                             <>
-                                <ResponsiveNavLink href={route('instructor.trainees.index')} active={route().current('instructor.trainees.index')}>
-                                    Trainee Accounts
+                                <ResponsiveNavLink href={route('instructor.trainees.index')} active={route().current('instructor.trainees.index') || route().current('instructor.cohorts.*')}>
+                                    👥 Training Cohorts
                                 </ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('instructor.labs.index')} active={route().current('instructor.labs.*')}>
                                     🔬 Simulation Labs
                                 </ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('instructor.courses.index')} active={route().current('instructor.courses.*')}>
-                                    Course Editor
+                                    📚 Academic Programmes
                                 </ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('instructor.submissions.index')} active={route().current('instructor.submissions.*')}>
                                     Gradebook

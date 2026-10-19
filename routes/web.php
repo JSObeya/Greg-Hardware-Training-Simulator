@@ -65,13 +65,21 @@ Route::middleware(['auth', 'role:admin,instructor'])->prefix('instructor')->name
     Route::delete('/trainees/{id}/force', [App\Http\Controllers\Instructor\TraineeController::class, 'forceDelete'])->name('trainees.force-delete');
     Route::post('/trainees/bulk', [App\Http\Controllers\Instructor\TraineeController::class, 'bulkStore'])->name('trainees.bulk');
 
-    // Courses & Modules
+    // Courses & Modules (Academic Programmes & Pathways)
     Route::resource('courses', App\Http\Controllers\Instructor\CourseController::class)->except(['show', 'create', 'edit']);
     Route::get('courses/create', fn() => redirect()->route('instructor.courses.index'))->name('courses.create');
     Route::get('courses/{id}', fn() => redirect()->route('instructor.courses.index'))->name('courses.show');
     Route::get('courses/{id}/edit', fn() => redirect()->route('instructor.courses.index'))->name('courses.edit');
     Route::post('modules', [App\Http\Controllers\Instructor\CourseController::class, 'storeModule'])->name('modules.store');
+    Route::put('modules/{module}', [App\Http\Controllers\Instructor\CourseController::class, 'updateModule'])->name('modules.update');
     Route::delete('modules/{module}', [App\Http\Controllers\Instructor\CourseController::class, 'destroyModule'])->name('modules.destroy');
+
+    // Training Cohorts Management
+    Route::post('cohorts/update', [App\Http\Controllers\Instructor\TraineeController::class, 'updateCohort'])->name('cohorts.update');
+    Route::post('cohorts/store', [App\Http\Controllers\Instructor\TraineeController::class, 'storeCohort'])->name('cohorts.store');
+    Route::post('cohorts/delete', [App\Http\Controllers\Instructor\TraineeController::class, 'deleteCohort'])->name('cohorts.delete');
+    Route::get('cohorts', fn() => redirect()->route('instructor.trainees.index'))->name('cohorts.index');
+    Route::get('programmes', fn() => redirect()->route('instructor.courses.index'))->name('programmes.index');
 
     // Labs & Config
     Route::resource('labs', App\Http\Controllers\Instructor\LabController::class)->except(['show', 'create']);
